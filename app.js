@@ -234,4 +234,16 @@ document.addEventListener('DOMContentLoaded', () => {
       navigate(prev);
     }
   });
+
+  // Splash screen: remove from DOM after the CSS animation completes.
+  const splash = document.getElementById('splash');
+  if (splash) {
+    const dismiss = () => splash.classList.add('splash-done');
+    splash.addEventListener('animationend', (e) => {
+      // The container animation is what drives the fade-out; wait for it.
+      if (e.animationName === 'splash-container') dismiss();
+    });
+    // Safety fallback in case animationend doesn't fire (e.g. reduced motion).
+    setTimeout(dismiss, 2800);
+  }
 });

@@ -2,10 +2,21 @@
 const SCREENS = {};
 
 // ==================== LANDING ====================
+const LANDING_BG_IMAGES = [
+  'https://images.unsplash.com/photo-1652396506470-34aa317f7beb?w=1200&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1561570121-c8219daec12b?w=1200&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1516827003699-2880f453d93b?w=1200&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1732889516368-4c7dc531417d?w=1200&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1613845205719-8c87760ab728?w=1200&q=80&auto=format&fit=crop'
+];
 SCREENS.landing = () => `
   <div class="screen-body no-padding" style="display:flex;flex-direction:column">
     ${statusBar()}
     <div class="landing">
+      <div class="landing-bg" aria-hidden="true">
+        ${LANDING_BG_IMAGES.map((u, i) => `<div class="landing-bg-slide" style="background-image:url('${u}');animation-delay:${i * 7 - 1}s"></div>`).join('')}
+        <div class="landing-bg-overlay"></div>
+      </div>
       <div class="landing-top">
         ${logo(true)}
       </div>
