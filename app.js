@@ -189,11 +189,25 @@ function completeLogin() {
   showToast('Welcome back', 'check-circle');
   setTimeout(() => navigate('dashboard'), 400);
 }
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function alreadyCheckedInToday() {
+  return DATA.user.lastCheckIn === todayKey();
+}
 function completeCheckIn() {
-  showToast(`Streak: ${DATA.user.stats.streak + 1} days`, 'flame');
-  confetti();
+  if (alreadyCheckedInToday()) {
+    showToast("You've already checked in today", 'check-circle');
+    setTimeout(() => navigate('dashboard', { force: true }), 600);
+    return;
+  }
+  DATA.user.lastCheckIn = todayKey();
   DATA.user.stats.streak += 1;
-  setTimeout(() => navigate('dashboard'), 900);
+  const unit = DATA.user.stats.streakUnit || 'check-ins';
+  showToast(`Streak: ${DATA.user.stats.streak} ${unit}`, 'flame');
+  confetti();
+  setTimeout(() => navigate('dashboard', { force: true }), 900);
 }
 function completeCreateGoal(solo) {
   showToast(solo ? 'Goal created' : 'Goal created · 3 buddies invited', 'check-circle');

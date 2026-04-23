@@ -181,6 +181,15 @@ SCREENS.dashboard = () => {
               <div class="text-xs text-muted mt-1">Your streak is safe — rest is part of the plan.</div>
             </div>
           </div>
+        ` : alreadyCheckedInToday() ? `
+          <div class="card row gap-4" style="align-items:center;background:linear-gradient(135deg,rgba(198,242,78,0.14),rgba(198,242,78,0.03));border-color:rgba(198,242,78,0.35)">
+            <div class="icon-tile icon-tile-lg icon-tile-round icon-tile-primary-solid" style="box-shadow:var(--glow-primary)">${icon('check-circle')}</div>
+            <div class="flex-1">
+              <div class="fw-600">Checked in for today</div>
+              <div class="text-xs text-muted mt-1">${DATA.user.stats.streak}-check-in streak · Come back tomorrow</div>
+            </div>
+            <span style="color:var(--color-primary)">${icon('check')}</span>
+          </div>
         ` : `
           <button class="card clickable" onclick="navigate('checkin')" style="width:100%;text-align:left;display:flex;align-items:center;gap:var(--space-4);background:linear-gradient(135deg,rgba(198,242,78,0.12),rgba(198,242,78,0.03));border-color:rgba(198,242,78,0.25)">
             <div class="icon-tile icon-tile-lg icon-tile-round icon-tile-primary-solid" style="box-shadow:var(--glow-primary)">${icon('check')}</div>
@@ -278,6 +287,22 @@ SCREENS.dashboard = () => {
 SCREENS.checkin = () => {
   const due = goalsDueToday();
   const dateLine = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  if (alreadyCheckedInToday()) {
+    return `
+    ${statusBar()}
+    ${header({ back: 'dashboard', simple: true })}
+    <div class="screen-body anim-in">
+      <div class="card text-center" style="padding:var(--space-6);margin-top:var(--space-6);background:linear-gradient(135deg,rgba(198,242,78,0.14),rgba(198,242,78,0.03));border-color:rgba(198,242,78,0.35)">
+        <div class="icon-tile icon-tile-lg icon-tile-round icon-tile-primary-solid" style="margin:0 auto var(--space-4);box-shadow:var(--glow-primary)">${icon('check-circle')}</div>
+        <h2 style="font-family:var(--font-display);font-size:var(--text-lg);font-weight:600;letter-spacing:-0.02em;margin-bottom:var(--space-2)">You're all set for today</h2>
+        <p class="text-muted text-sm" style="margin-bottom:var(--space-5)">${dateLine}<br/>${DATA.user.stats.streak}-check-in streak · Come back tomorrow to keep it going.</p>
+        <button class="btn btn-primary btn-block" onclick="navigate('dashboard')">
+          ${icon('arrow-left')}<span>Back to dashboard</span>
+        </button>
+      </div>
+    </div>
+    `;
+  }
   return `
   ${statusBar()}
   ${header({ back: 'dashboard', simple: true, right: `<div class="text-xs text-muted">Step 1 of 3</div>` })}
