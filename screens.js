@@ -1286,7 +1286,8 @@ SCREENS.challengeDetail = () => {
 // ==================== GROUPS LIST ====================
 SCREENS.groups = () => {
   const joined = DATA.groups.filter(g => g.joined);
-  const discover = DATA.groups.filter(g => !g.joined);
+  const publicDiscover = DATA.groups.filter(g => !g.joined && g.privacy !== 'private');
+  const privateDiscover = DATA.groups.filter(g => !g.joined && g.privacy === 'private');
   return `
     ${statusBar()}
     ${header({ title: 'Groups', subtitle: 'Small squads, shared accountability', back: 'dashboard' })}
@@ -1298,12 +1299,21 @@ SCREENS.groups = () => {
         </div>
       ` : ''}
 
-      <div class="section">
-        <div class="section-title"><h3>Discover</h3><span class="text-xs text-muted">${discover.length} open</span></div>
-        <div class="col gap-3">${discover.map(groupCard).join('')}</div>
-      </div>
+      ${publicDiscover.length ? `
+        <div class="section">
+          <div class="section-title"><h3>Open to join</h3><span class="text-xs text-muted">${publicDiscover.length} public</span></div>
+          <div class="col gap-3">${publicDiscover.map(groupCard).join('')}</div>
+        </div>
+      ` : ''}
 
-      <button class="card clickable mt-4" style="width:100%;border-style:dashed;text-align:center;color:var(--color-text-muted);padding:var(--space-6)" onclick="showToast('Group creation coming soon', 'sparkles')">
+      ${privateDiscover.length ? `
+        <div class="section">
+          <div class="section-title"><h3>Private · request to join</h3><span class="text-xs text-muted">${privateDiscover.length} private</span></div>
+          <div class="col gap-3">${privateDiscover.map(groupCard).join('')}</div>
+        </div>
+      ` : ''}
+
+      <button class="card clickable mt-4" style="width:100%;border-style:dashed;text-align:center;color:var(--color-text-muted);padding:var(--space-6)" onclick="navigate('create-group')">
         <div class="icon-tile icon-tile-lg icon-tile-round" style="background:var(--color-surface-3);color:var(--color-text-muted);margin:0 auto">${icon('plus')}</div>
         <div class="fw-600 mt-3">Start a group</div>
         <div class="text-xs mt-1">Invite friends or open it publicly</div>
@@ -1312,7 +1322,20 @@ SCREENS.groups = () => {
   `;
 };
 
+function privacyChip(g, opts = {}) {
+  const isPrivate = g.privacy === 'private';
+  const ico = isPrivate ? 'lock' : 'globe';
+  const label = isPrivate ? 'Private' : 'Public';
+  const color = isPrivate ? 'var(--color-text-muted)' : 'var(--color-primary)';
+  return `<span class="group-meta-chip" style="color:${color};font-weight:600"><span class="group-meta-ico">${icon(ico)}</span><span>${label}</span></span>`;
+}
+
 function groupCard(g) {
+  const statusPill = g.joined
+    ? `<span class="group-meta-chip" style="color:var(--color-primary);background:var(--color-primary-dim);font-weight:600"><span class="group-meta-ico">${icon('check')}</span><span>Joined</span></span>`
+    : g.requested
+      ? `<span class="group-meta-chip" style="color:var(--color-text-muted);font-weight:600"><span class="group-meta-ico">${icon('clock')}</span><span>Requested</span></span>`
+      : '';
   return `
     <div class="card card-group clickable" onclick="openGroup('${g.id}')">
       <div class="row gap-3" style="align-items:flex-start">
@@ -1321,9 +1344,10 @@ function groupCard(g) {
           <div class="fw-600" style="font-size:var(--text-base);line-height:1.3">${g.name}</div>
           <div class="text-xs text-muted mt-1">${g.focus}</div>
           <div class="group-meta mt-2">
-            <span class="group-meta-chip" style="color:var(--color-text-muted)"><span class="group-meta-ico">${icon('users')}</span><span>${g.memberCount} members</span></span>
-            <span class="group-meta-chip" style="color:var(--color-warning);font-weight:600"><span class="group-meta-ico">${icon('flame')}</span><span>${g.groupStreak}-day streak</span></span>
-            ${g.joined ? `<span class="badge badge-success">Joined</span>` : ''}
+            ${privacyChip(g)}
+            <span class="group-meta-chip" style="color:var(--color-text-muted)"><span class="group-meta-ico">${icon('users')}</span><span>${g.memberCount}</span></span>
+            <span class="group-meta-chip" style="color:var(--color-warning);font-weight:600"><span class="group-meta-ico">${icon('flame')}</span><span>${g.groupStreak}d</span></span>
+            ${statusPill}
           </div>
         </div>
         <span style="color:var(--color-text-faint)">${icon('chevron-right')}</span>
@@ -1343,8 +1367,17 @@ SCREENS.groupDetail = () => {
       <div class="col" style="align-items:center;text-align:center;padding:var(--space-3) 0">
         <div class="group-icon group-icon-xl group-icon-${g.tint || 'primary'}">${icon(g.icon)}</div>
         <h2 style="font-family:var(--font-display);font-size:var(--text-xl);font-weight:600;letter-spacing:-0.02em;margin-top:var(--space-3)">${g.name}</h2>
-        <div class="text-muted text-sm mt-1">${g.focus} · ${g.city}</div>
+        <div class="row gap-2 mt-2" style="justify-content:center;flex-wrap:wrap">
+          ${privacyChip(g)}
+          <span class="group-meta-chip" style="color:var(--color-text-muted)"><span class="group-meta-ico">${icon('map-pin')}</span><span>${g.city.replace(/^—\s*/, '')}</span></span>
+        </div>
+        <div class="text-muted text-sm mt-2">${g.focus}</div>
         <p class="text-sm text-muted mt-3" style="max-width:34ch">${g.description}</p>
+        ${g.privacy === 'private' && !g.joined ? `
+          <div class="text-xs mt-3" style="color:var(--color-text-muted);display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--color-border);border-radius:999px;background:var(--color-surface-2)">
+            <span style="width:14px;height:14px;display:inline-flex;flex-shrink:0">${icon('lock')}</span><span>Admin approval needed to join</span>
+          </div>
+        ` : ''}
       </div>
 
       <div class="stat-row">
@@ -1362,44 +1395,95 @@ SCREENS.groupDetail = () => {
         </div>
       </div>
 
-      <div class="section">
-        <div class="section-title"><h3>Members</h3><a href="#" onclick="showToast('Full member list coming soon');return false">See all</a></div>
-        <div class="row gap-3" style="overflow-x:auto;padding-bottom:8px">
-          ${memberObjs.slice(0,8).map(m => `
-            <div class="col" style="align-items:center;text-align:center;flex-shrink:0;width:64px">
-              ${avatar(m)}
-              <div class="text-xs fw-600 mt-2" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:64px">${m.name.split(' ')[0]}</div>
-            </div>
-          `).join('')}
+      ${g.privacy === 'private' && !g.joined ? `
+        <div class="section">
+          <div class="card text-center" style="padding:var(--space-5)">
+            <div class="icon-tile icon-tile-lg icon-tile-round" style="background:var(--color-surface-3);color:var(--color-text-muted);margin:0 auto var(--space-3)">${icon('lock')}</div>
+            <div class="fw-600">Members and activity are private</div>
+            <div class="text-xs text-muted mt-1">Join this group to see who's in it and what they're up to.</div>
+          </div>
         </div>
-      </div>
-
-      <div class="section">
-        <div class="section-title"><h3>Group activity</h3></div>
-        <div class="card" style="padding:0 var(--space-5)">
-          ${g.activity.map(a => {
-            const actor = findBuddy(a.actor);
-            return `
-              <div class="activity-item">
-                ${avatar(actor)}
-                <div class="activity-body">
-                  <div class="activity-text"><strong>${actor.name}</strong> ${a.text}</div>
-                  <div class="activity-time">${a.time}</div>
-                </div>
+      ` : `
+        <div class="section">
+          <div class="section-title"><h3>Members</h3><a href="#" onclick="showToast('Full member list coming soon');return false">See all</a></div>
+          <div class="row gap-3" style="overflow-x:auto;padding-bottom:8px">
+            ${memberObjs.slice(0,8).map(m => `
+              <div class="col" style="align-items:center;text-align:center;flex-shrink:0;width:64px">
+                ${avatar(m)}
+                <div class="text-xs fw-600 mt-2" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:64px">${m.name.split(' ')[0]}</div>
               </div>
-            `;
-          }).join('')}
+            `).join('')}
+          </div>
         </div>
-      </div>
+
+        <div class="section">
+          <div class="section-title"><h3>Group activity</h3></div>
+          <div class="card" style="padding:0 var(--space-5)">
+            ${g.activity.map(a => {
+              const actor = findBuddy(a.actor);
+              return `
+                <div class="activity-item">
+                  ${avatar(actor)}
+                  <div class="activity-body">
+                    <div class="activity-text"><strong>${actor.name}</strong> ${a.text}</div>
+                    <div class="activity-time">${a.time}</div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `}
 
       <div class="mt-6">
         ${g.joined
           ? `<button class="btn btn-secondary btn-block" onclick="showToast('Left the group', 'x')">Leave group</button>`
-          : `<button class="btn btn-primary btn-block" onclick="joinGroup('${g.id}')">${icon('plus')}<span>Join group</span></button>`}
+          : g.privacy === 'private'
+            ? (g.requested
+                ? `<button class="btn btn-secondary btn-block" disabled style="opacity:0.7;cursor:default">${icon('clock')}<span>Request pending</span></button>`
+                : `<button class="btn btn-primary btn-block" onclick="requestJoinGroup('${g.id}')">${icon('lock')}<span>Request to join</span></button>`)
+            : `<button class="btn btn-primary btn-block" onclick="joinGroup('${g.id}')">${icon('plus')}<span>Join group</span></button>`}
       </div>
     </div>
   `;
 };
+
+// ==================== CREATE GROUP ====================
+SCREENS.createGroup = () => `
+  ${statusBar()}
+  ${header({ back: 'groups', simple: true })}
+  <div class="screen-body anim-in">
+    <h2 style="font-family:var(--font-display);font-size:var(--text-xl);font-weight:600;letter-spacing:-0.02em;margin-bottom:var(--space-2)">Start a group</h2>
+    <p class="text-muted text-sm mb-6">Invite friends or open it up publicly.</p>
+
+    <div class="field">
+      <label class="field-label">Group name</label>
+      <input id="newGroupName" class="input" placeholder="Morning Runners Austin" />
+    </div>
+
+    <div class="field">
+      <label class="field-label">Focus</label>
+      <input id="newGroupFocus" class="input" placeholder="Running · 3x per week" />
+    </div>
+
+    <div class="field">
+      <label class="field-label">Description</label>
+      <textarea id="newGroupDesc" class="textarea" placeholder="What's this group about? What's expected?"></textarea>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Privacy</label>
+      <div class="segmented" style="--cols:2" id="newGroupPrivacySeg">
+        <button class="active" data-val="public" onclick="selectGroupPrivacy(this,'public')"><span style="width:16px;height:16px;display:inline-flex;flex-shrink:0;align-items:center;justify-content:center">${icon('globe')}</span><span style="margin-left:6px">Public</span></button>
+        <button data-val="private" onclick="selectGroupPrivacy(this,'private')"><span style="width:16px;height:16px;display:inline-flex;flex-shrink:0;align-items:center;justify-content:center">${icon('lock')}</span><span style="margin-left:6px">Private</span></button>
+      </div>
+      <div id="newGroupPrivacyHelp" class="text-xs text-muted mt-2">Anyone can discover this group and join with one tap.</div>
+    </div>
+
+    <button class="btn btn-primary btn-block mt-4" onclick="completeCreateGroup()">${icon('plus')}<span>Create group</span></button>
+    <button class="btn btn-ghost btn-block mt-2" onclick="navigate('groups')">Cancel</button>
+  </div>
+`;
 
 // ==================== NEARBY / BUDDY MATCHMAKING ====================
 SCREENS.nearby = () => {

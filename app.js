@@ -38,6 +38,7 @@ const ROUTES = {
   'challenge-detail':   SCREENS.challengeDetail,
   'groups':             SCREENS.groups,
   'group-detail':       SCREENS.groupDetail,
+  'create-group':       SCREENS.createGroup,
   'nearby':             SCREENS.nearby,
   'share-profile':      SCREENS.shareProfile,
   'editProfile':        SCREENS.editProfile,
@@ -124,9 +125,56 @@ function joinGroup(id) {
   const g = DATA.groups.find(x => x.id === id);
   if (!g) return;
   g.joined = true;
+  g.requested = false;
+  g.memberCount = (g.memberCount || 0) + 1;
+  if (!g.members.includes('me')) g.members = ['me', ...g.members];
   showToast('Welcome to ' + g.name, 'check-circle');
   confetti();
   setTimeout(() => navigate('group-detail', { force: true }), 600);
+}
+function requestJoinGroup(id) {
+  const g = DATA.groups.find(x => x.id === id);
+  if (!g) return;
+  g.requested = true;
+  showToast('Request sent to ' + g.name, 'send');
+  setTimeout(() => navigate('group-detail', { force: true }), 600);
+}
+function selectGroupPrivacy(btn, val) {
+  const seg = document.getElementById('newGroupPrivacySeg');
+  if (seg) seg.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const help = document.getElementById('newGroupPrivacyHelp');
+  if (help) {
+    help.textContent = val === 'private'
+      ? 'Hidden from discovery. People must request to join and be approved by an admin.'
+      : 'Anyone can discover this group and join with one tap.';
+  }
+}
+function completeCreateGroup() {
+  const nameEl = document.getElementById('newGroupName');
+  const focusEl = document.getElementById('newGroupFocus');
+  const descEl = document.getElementById('newGroupDesc');
+  const seg = document.getElementById('newGroupPrivacySeg');
+  const name = (nameEl && nameEl.value.trim()) || 'New group';
+  const focusVal = (focusEl && focusEl.value.trim()) || 'General · Weekly';
+  const desc = (descEl && descEl.value.trim()) || 'A new accountability group.';
+  const activeBtn = seg && seg.querySelector('button.active');
+  const privacy = (activeBtn && activeBtn.dataset.val) || 'public';
+  const id = 'gr' + (DATA.groups.length + 1) + Date.now().toString(36).slice(-3);
+  const newGroup = {
+    id, name, icon: 'users', tint: 'primary',
+    city: privacy === 'private' ? '— Invite only' : DATA.user.location || '— Global',
+    memberCount: 1, groupStreak: 0,
+    focus: focusVal, description: desc,
+    privacy,
+    members: ['me'], joined: true, requested: false,
+    activity: [],
+  };
+  DATA.groups.unshift(newGroup);
+  APP.currentGroupId = id;
+  showToast(`Group created · ${privacy === 'private' ? 'Private' : 'Public'}`, 'check-circle');
+  confetti();
+  setTimeout(() => navigate('group-detail', { force: true }), 700);
 }
 function joinChallenge(id) {
   const c = DATA.challenges.find(x => x.id === id);
