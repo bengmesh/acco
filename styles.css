@@ -508,6 +508,47 @@ a:hover { text-decoration: underline; }
 }
 .badge svg { width: 12px; height: 12px; }
 
+/* =============== Icon tiles (framed icons) =============== */
+/* Use on any square container wrapping a single icon. Provides consistent
+   inner padding so icons never touch the frame edge. Size variants set the
+   outer box; the inner SVG is sized as a ratio of that box (~50%). */
+.icon-tile {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: var(--radius-lg);
+}
+.icon-tile > svg { width: 50%; height: 50%; }
+.icon-tile-sm  { width: 32px; height: 32px; }
+.icon-tile-md  { width: 40px; height: 40px; }
+.icon-tile-lg  { width: 48px; height: 48px; }
+.icon-tile-xl  { width: 56px; height: 56px; }
+.icon-tile-2xl { width: 64px; height: 64px; }
+.icon-tile-round { border-radius: var(--radius-full); }
+
+/* Variants */
+.icon-tile-primary {
+  background: linear-gradient(135deg, var(--color-primary-dim), rgba(198,242,78,0.02));
+  border: 1px solid rgba(198,242,78,0.3);
+  color: var(--color-primary);
+}
+.icon-tile-primary-solid {
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+.icon-tile-primary-dim {
+  background: var(--color-primary-dim);
+  color: var(--color-primary);
+}
+.icon-tile-success-dim {
+  background: var(--color-success-dim);
+  color: var(--color-success);
+}
+.icon-tile-muted {
+  background: var(--color-surface-3);
+  color: var(--color-text-faint);
+}
+
 .badge-primary { background: var(--color-primary-dim); color: var(--color-primary); border-color: transparent; }
 .badge-success { background: var(--color-success-dim); color: var(--color-success); border-color: transparent; }
 .badge-warn { background: var(--color-warning-dim); color: var(--color-warning); border-color: transparent; }

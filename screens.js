@@ -158,7 +158,7 @@ SCREENS.dashboard = () => {
           <h3>Today's check-in</h3>
         </div>
         <button class="card clickable" onclick="navigate('checkin')" style="width:100%;text-align:left;display:flex;align-items:center;gap:var(--space-4);background:linear-gradient(135deg,rgba(198,242,78,0.12),rgba(198,242,78,0.03));border-color:rgba(198,242,78,0.25)">
-          <div style="width:48px;height:48px;border-radius:var(--radius-full);background:var(--color-primary);color:var(--color-text-inverse);display:grid;place-items:center;flex-shrink:0;box-shadow:var(--glow-primary)">${icon('check')}</div>
+          <div class="icon-tile icon-tile-lg icon-tile-round icon-tile-primary-solid" style="box-shadow:var(--glow-primary)">${icon('check')}</div>
           <div class="flex-1">
             <div class="fw-600">Check in for today</div>
             <div class="text-xs text-muted mt-1">3 goals need a yes/no from you</div>
@@ -291,7 +291,7 @@ SCREENS.goalHistory = () => `
         { title: 'Walk after dinner',     desc: 'Completed', when: 'Feb 14', streak: 28 },
       ].map(g => `
         <div class="card row gap-3">
-          <div style="width:40px;height:40px;border-radius:var(--radius-full);background:var(--color-success-dim);color:var(--color-success);display:grid;place-items:center">${icon('check')}</div>
+          <div class="icon-tile icon-tile-md icon-tile-round icon-tile-success-dim">${icon('check')}</div>
           <div class="flex-1">
             <div class="fw-600 text-sm">${g.title}</div>
             <div class="text-xs text-muted mt-1">${g.desc} · ${g.when}</div>
@@ -583,7 +583,7 @@ SCREENS.buddyDetail = () => {
         <div class="section-title"><h3>Their goals</h3></div>
         <div class="card">
           <div class="list-row" style="padding:var(--space-2)">
-            <div style="width:36px;height:36px;border-radius:var(--radius-full);background:var(--color-primary-dim);color:var(--color-primary);display:grid;place-items:center">${icon('target')}</div>
+            <div class="icon-tile icon-tile-round icon-tile-primary-dim" style="width:36px;height:36px">${icon('target')}</div>
             <div class="list-row-main">
               <div class="list-row-title text-sm">${b.lastGoal}</div>
               <div class="list-row-sub">68% complete · 12 days left</div>
@@ -689,7 +689,7 @@ SCREENS.leaderboard = () => `
 
     <div class="card mt-6">
       <div class="row gap-3">
-        <div style="width:40px;height:40px;border-radius:var(--radius-full);background:var(--color-primary-dim);color:var(--color-primary);display:grid;place-items:center;flex-shrink:0">${icon('trending-up')}</div>
+        <div class="icon-tile icon-tile-md icon-tile-round icon-tile-primary-dim">${icon('trending-up')}</div>
         <div class="flex-1">
           <div class="fw-600 text-sm">You moved up 2 spots this week</div>
           <div class="text-xs text-muted mt-1">Keep your streak going to catch Maya.</div>
@@ -817,7 +817,7 @@ SCREENS.profile = () => {
         <div class="row gap-3" style="overflow-x:auto;padding-bottom:8px">
           ${DATA.badges.filter(b=>b.earned).map(b=>`
             <div class="col" style="align-items:center;text-align:center;flex-shrink:0;width:88px">
-              <div style="width:64px;height:64px;border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--color-primary-dim),rgba(198,242,78,0.04));border:1px solid rgba(198,242,78,0.3);display:grid;place-items:center;color:var(--color-primary)">${icon(b.icon)}</div>
+              <div class="icon-tile icon-tile-2xl icon-tile-primary">${icon(b.icon)}</div>
               <div class="text-xs fw-600 mt-2" style="white-space:nowrap">${b.name}</div>
             </div>
           `).join('')}
@@ -910,7 +910,7 @@ SCREENS.badges = () => `
   <div class="screen-body anim-in">
     <div class="card" style="background:linear-gradient(135deg,var(--color-primary-dim),rgba(198,242,78,0.02));border-color:rgba(198,242,78,0.25);margin-bottom:var(--space-6)">
       <div class="row gap-3">
-        <div style="width:48px;height:48px;border-radius:var(--radius-full);background:var(--color-primary);color:var(--color-text-inverse);display:grid;place-items:center">${icon('award')}</div>
+        <div class="icon-tile icon-tile-lg icon-tile-round icon-tile-primary-solid">${icon('award')}</div>
         <div class="flex-1">
           <div class="fw-600">Next badge: Month Strong</div>
           <div class="text-xs text-muted mt-1">12 more days to go</div>
@@ -923,7 +923,7 @@ SCREENS.badges = () => `
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-3);margin-bottom:var(--space-6)">
       ${DATA.badges.filter(b=>b.earned).map(b=>`
         <div class="card text-center" style="padding:var(--space-4) var(--space-2)">
-          <div style="width:56px;height:56px;margin:0 auto var(--space-3);border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--color-primary-dim),rgba(198,242,78,0.02));border:1px solid rgba(198,242,78,0.3);display:grid;place-items:center;color:var(--color-primary)">${icon(b.icon)}</div>
+          <div class="icon-tile icon-tile-xl icon-tile-primary" style="margin:0 auto var(--space-3)">${icon(b.icon)}</div>
           <div class="text-xs fw-600">${b.name}</div>
           <div class="text-xs text-faint mt-1" style="line-height:1.3">${b.desc}</div>
         </div>
@@ -934,7 +934,7 @@ SCREENS.badges = () => `
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-3)">
       ${DATA.badges.filter(b=>!b.earned).map(b=>`
         <div class="card text-center" style="padding:var(--space-4) var(--space-2);opacity:0.5">
-          <div style="width:56px;height:56px;margin:0 auto var(--space-3);border-radius:var(--radius-lg);background:var(--color-surface-3);display:grid;place-items:center;color:var(--color-text-faint)">${icon('lock')}</div>
+          <div class="icon-tile icon-tile-xl icon-tile-muted" style="margin:0 auto var(--space-3)">${icon('lock')}</div>
           <div class="text-xs fw-600">${b.name}</div>
           <div class="text-xs text-faint mt-1" style="line-height:1.3">${b.desc}</div>
         </div>
