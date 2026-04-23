@@ -906,13 +906,13 @@ SCREENS.profile = () => {
       <div class="col" style="align-items:center;text-align:center;padding:var(--space-4) 0">
         <div style="position:relative">
           ${avatar(u, 'xl').replace('avatar-xl"', 'avatar-xl avatar-ring"')}
-          <button class="icon-btn" style="position:absolute;bottom:0;right:-4px;width:32px;height:32px;background:var(--color-primary);color:var(--color-text-inverse);border:3px solid var(--color-bg)" aria-label="Edit avatar">${icon('edit')}</button>
+          <button class="icon-btn" onclick="navigate('editProfile')" style="position:absolute;bottom:0;right:-4px;width:32px;height:32px;background:var(--color-primary);color:var(--color-text-inverse);border:3px solid var(--color-bg)" aria-label="Edit avatar">${icon('edit')}</button>
         </div>
         <h2 style="font-family:var(--font-display);font-size:var(--text-xl);font-weight:600;letter-spacing:-0.02em;margin-top:var(--space-4)">${u.name}</h2>
-        <div class="text-muted text-sm mt-1">${u.handle} · ${u.location}</div>
+        <div class="text-muted text-sm mt-1">${u.handle}${(u.visibility?.showLocation ?? true) && u.location ? ` · ${u.location}` : ''}</div>
         <p class="text-sm text-muted mt-3" style="max-width:32ch">${u.bio}</p>
         <div class="row gap-2 mt-4">
-          <button class="btn btn-secondary btn-sm">${icon('edit')}<span>Edit profile</span></button>
+          <button class="btn btn-secondary btn-sm" onclick="navigate('editProfile')">${icon('edit')}<span>Edit profile</span></button>
           <button class="btn btn-secondary btn-sm" onclick="navigate('share-profile')">${icon('share')}<span>Share</span></button>
         </div>
       </div>
@@ -981,28 +981,28 @@ SCREENS.settings = () => `
   <div class="screen-body anim-in">
     <div class="section-title"><h3>Account</h3></div>
     <div class="col gap-2 mb-6">
-      ${navRow('user', 'Edit profile', '')}
-      ${navRow('mail', 'Email', 'ben@meshcreative.co')}
-      ${navRow('lock', 'Password', '')}
-      ${navRow('shield', 'Privacy', '')}
+      ${navRow('user', 'Edit profile', '', "navigate('editProfile')")}
+      ${navRow('mail', 'Email', DATA.user.email || 'ben@meshcreative.co', "navigate('accountEmail')")}
+      ${navRow('lock', 'Password', '', "navigate('accountPassword')")}
+      ${navRow('shield', 'Privacy', '', "navigate('accountPrivacy')")}
     </div>
 
     <div class="section-title"><h3>App</h3></div>
     <div class="col gap-2 mb-6">
       ${navRow('bell', 'Notifications', '', "navigate('notification-settings')")}
-      ${navRow('moon', 'Appearance', 'Dark')}
-      ${navRow('target', 'Goal preferences', '')}
+      ${navRow('moon', 'Appearance', (DATA.user.appearance ? DATA.user.appearance.charAt(0).toUpperCase() + DATA.user.appearance.slice(1) : 'Dark'), "navigate('appearance')")}
+      ${navRow('target', 'Goal preferences', '', "navigate('goalPreferences')")}
     </div>
 
     <div class="section-title"><h3>Support</h3></div>
     <div class="col gap-2 mb-6">
-      ${navRow('help-circle', 'Help center', '')}
-      ${navRow('message-circle', 'Contact support', '')}
-      ${navRow('share', 'Rate the app', '')}
+      ${navRow('help-circle', 'Help center', '', "navigate('helpCenter')")}
+      ${navRow('message-circle', 'Contact support', '', "navigate('contactSupport')")}
+      ${navRow('share', 'Rate the app', '', "showToast('Thanks for the love','heart-filled')")}
     </div>
 
-    <button class="btn btn-secondary btn-block">${icon('log-out')}<span>Log out</span></button>
-    <button class="btn btn-ghost btn-block mt-2" style="color:var(--color-danger)">Delete account</button>
+    <button class="btn btn-secondary btn-block" onclick="logOut()">${icon('log-out')}<span>Log out</span></button>
+    <button class="btn btn-ghost btn-block mt-2" onclick="confirmDeleteAccount()" style="color:var(--color-danger)">Delete account</button>
   </div>
 `;
 
@@ -1478,3 +1478,316 @@ SCREENS.shareProfile = () => {
     </div>
   `;
 };
+
+// ==================== EDIT PROFILE ====================
+// Reusable toggle widget
+function settingsToggle(id, on) {
+  return `
+    <label class="sw-label" data-for="${id}" style="display:inline-flex;align-items:center;cursor:pointer">
+      <input id="${id}" type="checkbox" ${on?'checked':''} style="display:none" onchange="this.parentElement.querySelector('span.sw').classList.toggle('on', this.checked)"/>
+      <span class="sw ${on?'on':''}" style="width:44px;height:26px;background:var(--color-surface-3);border-radius:999px;position:relative;transition:all 200ms"><span style="position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:all 200ms"></span></span>
+    </label>`;
+}
+function toggleRow(id, label, desc, on = true) {
+  return `
+    <div class="list-row" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-4)">
+      <div class="list-row-main">
+        <div class="list-row-title text-sm">${label}</div>
+        ${desc ? `<div class="list-row-sub">${desc}</div>` : ''}
+      </div>
+      ${settingsToggle(id, on)}
+    </div>`;
+}
+
+SCREENS.editProfile = () => {
+  const u = DATA.user;
+  return `
+    <style>.sw.on { background: var(--color-primary) !important; } .sw.on > span { left: 21px !important; }</style>
+    ${statusBar()}
+    ${header({
+      title: 'Edit profile',
+      back: 'profile',
+      right: `<button class="icon-btn" onclick="saveProfile()" aria-label="Save" style="color:var(--color-primary);font-weight:600;font-family:var(--font-body);font-size:var(--text-sm);width:auto;padding:0 10px">Save</button>`
+    })}
+    <div class="screen-body anim-in">
+      <div class="col" style="align-items:center;text-align:center;padding:var(--space-2) 0 var(--space-5)">
+        <div style="position:relative">
+          ${avatar(u, 'xl').replace('avatar-xl"', 'avatar-xl avatar-ring"')}
+          <button class="icon-btn" onclick="showToast('Photo picker coming soon','camera')" style="position:absolute;bottom:0;right:-4px;width:34px;height:34px;background:var(--color-primary);color:var(--color-text-inverse);border:3px solid var(--color-bg)" aria-label="Change photo">${icon('camera')}</button>
+        </div>
+        <button class="btn btn-ghost btn-sm mt-3" onclick="showToast('Photo picker coming soon','camera')" style="color:var(--color-primary)">Change photo</button>
+      </div>
+
+      <div class="auth-form" style="padding:0">
+        <div class="field">
+          <label class="field-label">Name</label>
+          <div class="input-icon">${icon('user')}<input id="ep-name" class="input" type="text" value="${u.name}"/></div>
+        </div>
+        <div class="field">
+          <label class="field-label">Username</label>
+          <div class="input-icon">${icon('at-sign')}<input id="ep-handle" class="input" type="text" value="${u.handle.replace(/^@/, '')}"/></div>
+          <div class="field-hint text-xs text-muted" style="margin-top:6px">acco.fit/${u.handle.replace(/^@/, '')}</div>
+        </div>
+        <div class="field">
+          <label class="field-label">Bio</label>
+          <textarea id="ep-bio" class="input" rows="3" maxlength="160" oninput="updateBioCount(this)" style="resize:none;padding:12px 14px;font-family:var(--font-body)">${u.bio}</textarea>
+          <div class="field-hint text-xs text-muted" style="margin-top:6px;display:flex;justify-content:space-between"><span>A short line your buddies will see.</span><span id="ep-bio-count">${u.bio.length}/160</span></div>
+        </div>
+        <div class="field">
+          <label class="field-label">Location</label>
+          <div class="input-icon">${icon('map-pin')}<input id="ep-location" class="input" type="text" value="${u.location}"/></div>
+        </div>
+        <div class="field">
+          <label class="field-label">Birthday</label>
+          <div class="input-icon">${icon('calendar')}<input id="ep-birthday" class="input" type="text" placeholder="MM / DD / YYYY" value="${u.birthday || ''}"/></div>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:var(--space-6)"><h3>Visibility</h3></div>
+      <div class="col gap-2 mb-6">
+        ${toggleRow('ep-vis-public',  'Public profile',  'Anyone with your link can see your streak and badges', u.visibility?.publicProfile ?? true)}
+        ${toggleRow('ep-vis-location','Show location',   'Display your city on your profile', u.visibility?.showLocation ?? true)}
+        ${toggleRow('ep-vis-activity','Share activity',  'Let buddies see your recent check-ins', u.visibility?.shareActivity ?? true)}
+      </div>
+
+      <button class="btn btn-primary btn-block" onclick="saveProfile()">Save changes</button>
+      <button class="btn btn-ghost btn-block mt-2" onclick="navigate('profile')">Cancel</button>
+    </div>
+  `;
+};
+
+// ==================== EMAIL ====================
+SCREENS.accountEmail = () => {
+  const u = DATA.user;
+  return `
+    ${statusBar()}
+    ${header({ title: 'Email', back: 'settings' })}
+    <div class="screen-body anim-in">
+      <div class="card" style="padding:var(--space-4);margin-bottom:var(--space-4)">
+        <div class="row" style="gap:12px;align-items:center">
+          <div class="icon-tile icon-tile-md" style="background:var(--color-primary-dim);color:var(--color-primary)">${icon('check-circle')}</div>
+          <div class="flex-1">
+            <div class="text-sm fw-600">${u.email || 'ben@meshcreative.co'}</div>
+            <div class="text-xs text-muted">Verified · primary address</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title"><h3>Change email</h3></div>
+      <div class="auth-form" style="padding:0">
+        <div class="field">
+          <label class="field-label">New email</label>
+          <div class="input-icon">${icon('mail')}<input id="ae-new" class="input" type="email" placeholder="you@example.com"/></div>
+        </div>
+        <div class="field">
+          <label class="field-label">Current password</label>
+          <div class="input-icon">${icon('lock')}<input id="ae-pw" class="input" type="password" placeholder="Confirm with password"/></div>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block mt-4" onclick="updateEmail()">Send verification</button>
+      <div class="text-xs text-muted text-center mt-3">We'll send a confirmation to the new address before switching.</div>
+    </div>
+  `;
+};
+
+// ==================== PASSWORD ====================
+SCREENS.accountPassword = () => `
+  ${statusBar()}
+  ${header({ title: 'Password', back: 'settings' })}
+  <div class="screen-body anim-in">
+    <div class="auth-form" style="padding:0">
+      <div class="field">
+        <label class="field-label">Current password</label>
+        <div class="input-icon">${icon('lock')}<input id="pw-current" class="input" type="password" placeholder="Enter current password"/></div>
+      </div>
+      <div class="field">
+        <label class="field-label">New password</label>
+        <div class="input-icon">${icon('lock')}<input id="pw-new" class="input" type="password" placeholder="At least 8 characters"/></div>
+      </div>
+      <div class="field">
+        <label class="field-label">Confirm new password</label>
+        <div class="input-icon">${icon('lock')}<input id="pw-confirm" class="input" type="password" placeholder="Repeat new password"/></div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block mt-4" onclick="updatePassword()">Update password</button>
+    <div class="card mt-5" style="padding:var(--space-4)">
+      <div class="text-sm fw-600 mb-2">Password tips</div>
+      <div class="text-xs text-muted" style="line-height:1.6">Use 12+ characters with a mix of letters, numbers, and symbols. Avoid reusing passwords from other apps.</div>
+    </div>
+    <a href="#" onclick="showToast('Reset link sent','mail');return false" class="text-sm text-center" style="display:block;margin-top:var(--space-4);color:var(--color-primary)">Forgot current password?</a>
+  </div>
+`;
+
+// ==================== PRIVACY ====================
+SCREENS.accountPrivacy = () => {
+  const v = DATA.user.visibility || {};
+  return `
+    <style>.sw.on { background: var(--color-primary) !important; } .sw.on > span { left: 21px !important; }</style>
+    ${statusBar()}
+    ${header({ title: 'Privacy', back: 'settings' })}
+    <div class="screen-body anim-in">
+      <div class="section-title"><h3>Profile visibility</h3></div>
+      <div class="col gap-2 mb-6">
+        ${toggleRow('pr-public',    'Public profile',     'Anyone with the link can view your profile', v.publicProfile ?? true)}
+        ${toggleRow('pr-location',  'Show my city',       'Display your city on your profile', v.showLocation ?? true)}
+        ${toggleRow('pr-nearby',    'Discoverable nearby','Appear in Nearby Buddies results', v.discoverable ?? true)}
+      </div>
+
+      <div class="section-title"><h3>Activity</h3></div>
+      <div class="col gap-2 mb-6">
+        ${toggleRow('pr-activity',  'Share activity',     'Buddies see your check-ins and streaks', v.shareActivity ?? true)}
+        ${toggleRow('pr-leaderboard','Show on leaderboard','Rank publicly among buddies', v.showLeaderboard ?? true)}
+        ${toggleRow('pr-milestones','Milestone cheers',   'Let buddies celebrate your milestones', v.milestones ?? true)}
+      </div>
+
+      <div class="section-title"><h3>Data</h3></div>
+      <div class="col gap-2 mb-6">
+        ${navRow('download','Download my data','', "showToast('Export queued · we\\'ll email you','mail')")}
+        ${navRow('shield','Blocked accounts','2', "showToast('Blocked accounts','shield')")}
+      </div>
+
+      <button class="btn btn-primary btn-block" onclick="savePrivacy()">Save changes</button>
+    </div>
+  `;
+};
+
+// ==================== APPEARANCE ====================
+SCREENS.appearance = () => {
+  const mode = DATA.user.appearance || 'dark';
+  const opt = (val, label, desc, iconName) => `
+    <button class="list-row clickable" onclick="setAppearance('${val}')" style="width:100%;text-align:left;background:var(--color-surface);border:1px solid ${mode===val?'var(--color-primary)':'var(--color-border)'};border-radius:var(--radius-md);padding:var(--space-4)">
+      <div class="icon-tile icon-tile-md" style="background:var(--color-surface-3);color:var(--color-text)">${icon(iconName)}</div>
+      <div class="list-row-main">
+        <div class="list-row-title text-sm">${label}</div>
+        <div class="list-row-sub">${desc}</div>
+      </div>
+      ${mode===val ? `<span style="color:var(--color-primary)">${icon('check')}</span>` : ''}
+    </button>`;
+  return `
+    ${statusBar()}
+    ${header({ title: 'Appearance', back: 'settings' })}
+    <div class="screen-body anim-in">
+      <div class="section-title"><h3>Theme</h3></div>
+      <div class="col gap-2 mb-6">
+        ${opt('dark',   'Dark',  'Acid lime on deep navy (default)', 'moon')}
+        ${opt('light',  'Light', 'Bright backgrounds, high contrast', 'sun')}
+        ${opt('system', 'Match system', 'Follow your phone setting', 'smartphone')}
+      </div>
+
+      <div class="section-title"><h3>Text size</h3></div>
+      <div class="card" style="padding:var(--space-4)">
+        <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:var(--space-3)">
+          <span class="text-xs text-muted">A</span>
+          <input id="text-size" type="range" min="0" max="2" value="1" style="flex:1;margin:0 12px;accent-color:var(--color-primary)"/>
+          <span class="text-lg">A</span>
+        </div>
+        <div class="text-xs text-muted text-center">Default</div>
+      </div>
+    </div>
+  `;
+};
+
+// ==================== GOAL PREFERENCES ====================
+SCREENS.goalPreferences = () => {
+  const p = DATA.user.goalPrefs || {};
+  return `
+    <style>.sw.on { background: var(--color-primary) !important; } .sw.on > span { left: 21px !important; }</style>
+    ${statusBar()}
+    ${header({ title: 'Goal preferences', back: 'settings' })}
+    <div class="screen-body anim-in">
+      <div class="section-title"><h3>Defaults</h3></div>
+      <div class="col gap-2 mb-6">
+        ${navRow('calendar','Default cadence','3x per week', "showToast('Cadence picker','calendar')")}
+        ${navRow('clock','Check-in window','Evening (6–10pm)', "showToast('Window picker','clock')")}
+        ${navRow('users','Default visibility','Buddies only', "showToast('Visibility picker','eye')")}
+      </div>
+
+      <div class="section-title"><h3>Accountability</h3></div>
+      <div class="col gap-2 mb-6">
+        ${toggleRow('gp-restdays','Honor rest days','Don\'t break streaks on scheduled off days', p.honorRest ?? true)}
+        ${toggleRow('gp-graceperiod','Grace period','Allow a 12-hour catch-up after a missed check-in', p.gracePeriod ?? true)}
+        ${toggleRow('gp-autoshare','Auto-share milestones','Post badges and PRs to your feed', p.autoShare ?? true)}
+      </div>
+
+      <div class="section-title"><h3>Reminders</h3></div>
+      <div class="col gap-2">
+        ${toggleRow('gp-morning','Morning nudge','8am reminder of today\'s goal', p.morningNudge ?? false)}
+        ${toggleRow('gp-evening','Evening check-in','7pm tap-to-check-in', p.eveningCheckin ?? true)}
+      </div>
+
+      <button class="btn btn-primary btn-block mt-6" onclick="saveGoalPrefs()">Save preferences</button>
+    </div>
+  `;
+};
+
+// ==================== HELP CENTER ====================
+SCREENS.helpCenter = () => {
+  const topics = [
+    { icon: 'flame',    title: 'Streaks and rest days',         desc: 'How check-in streaks really work' },
+    { icon: 'users',    title: 'Buddies and groups',            desc: 'Adding people, managing requests' },
+    { icon: 'target',   title: 'Setting goals',                 desc: 'Cadence, visibility, and partners' },
+    { icon: 'bell',     title: 'Notifications',                 desc: 'What triggers a nudge' },
+    { icon: 'shield',   title: 'Privacy and blocking',          desc: 'Control who sees what' },
+    { icon: 'trophy',   title: 'Leaderboards and badges',       desc: 'How points are earned' },
+    { icon: 'lock',     title: 'Account and login',             desc: 'Email, password, sign-in methods' },
+    { icon: 'zap',      title: 'Integrations',                  desc: 'Apple Health, Strava, Fitbit' }
+  ];
+  return `
+    ${statusBar()}
+    ${header({ title: 'Help center', back: 'settings' })}
+    <div class="screen-body anim-in">
+      <div class="field" style="margin-bottom:var(--space-5)">
+        <div class="input-icon">${icon('search')}<input class="input" type="text" placeholder="Search help articles"/></div>
+      </div>
+      <div class="section-title"><h3>Popular topics</h3></div>
+      <div class="col gap-2 mb-6">
+        ${topics.map(t => `
+          <button class="list-row clickable" onclick="showToast('Opening ${t.title.replace(/'/g, "\\'")}','help-circle')" style="width:100%;text-align:left;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-4)">
+            <div class="icon-tile icon-tile-md" style="background:var(--color-surface-3);color:var(--color-text-muted)">${icon(t.icon)}</div>
+            <div class="list-row-main">
+              <div class="list-row-title text-sm">${t.title}</div>
+              <div class="list-row-sub">${t.desc}</div>
+            </div>
+            <span style="color:var(--color-text-faint)">${icon('chevron-right')}</span>
+          </button>
+        `).join('')}
+      </div>
+      <button class="btn btn-secondary btn-block" onclick="navigate('contactSupport')">${icon('message-circle')}<span>Still need help? Contact support</span></button>
+    </div>
+  `;
+};
+
+// ==================== CONTACT SUPPORT ====================
+SCREENS.contactSupport = () => `
+  ${statusBar()}
+  ${header({ title: 'Contact support', back: 'helpCenter' })}
+  <div class="screen-body anim-in">
+    <div class="card" style="padding:var(--space-4);margin-bottom:var(--space-4)">
+      <div class="text-sm fw-600 mb-1">We reply within 1 business day</div>
+      <div class="text-xs text-muted">For urgent account issues, tell us in the first line.</div>
+    </div>
+
+    <div class="auth-form" style="padding:0">
+      <div class="field">
+        <label class="field-label">Topic</label>
+        <div class="input-icon">${icon('target')}<select id="cs-topic" class="input" style="appearance:none;padding-left:44px">
+          <option>Account or login</option>
+          <option>Billing</option>
+          <option>Feature request</option>
+          <option>Report a bug</option>
+          <option>Privacy or safety</option>
+          <option>Something else</option>
+        </select></div>
+      </div>
+      <div class="field">
+        <label class="field-label">Message</label>
+        <textarea id="cs-msg" class="input" rows="6" placeholder="Tell us what's going on…" style="resize:none;padding:12px 14px;font-family:var(--font-body)"></textarea>
+      </div>
+      <div class="field">
+        <label class="field-label">Reply-to</label>
+        <div class="input-icon">${icon('mail')}<input id="cs-email" class="input" type="email" value="${DATA.user.email || 'ben@meshcreative.co'}"/></div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block mt-4" onclick="sendSupportMessage()">Send message</button>
+  </div>
+`;

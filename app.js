@@ -40,6 +40,14 @@ const ROUTES = {
   'group-detail':       SCREENS.groupDetail,
   'nearby':             SCREENS.nearby,
   'share-profile':      SCREENS.shareProfile,
+  'editProfile':        SCREENS.editProfile,
+  'accountEmail':       SCREENS.accountEmail,
+  'accountPassword':    SCREENS.accountPassword,
+  'accountPrivacy':     SCREENS.accountPrivacy,
+  'appearance':         SCREENS.appearance,
+  'goalPreferences':    SCREENS.goalPreferences,
+  'helpCenter':         SCREENS.helpCenter,
+  'contactSupport':     SCREENS.contactSupport,
 };
 
 // Tabs that should reset history stack
@@ -247,3 +255,105 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(dismiss, 2800);
   }
 });
+
+// =============== Profile + Settings handlers ===============
+function updateBioCount(el) {
+  const counter = document.getElementById('ep-bio-count');
+  if (counter) counter.textContent = `${el.value.length}/160`;
+}
+
+function saveProfile() {
+  const name     = (document.getElementById('ep-name')?.value || '').trim();
+  const handle   = (document.getElementById('ep-handle')?.value || '').trim().replace(/^@/, '');
+  const bio      = (document.getElementById('ep-bio')?.value || '').trim();
+  const location = (document.getElementById('ep-location')?.value || '').trim();
+  const birthday = (document.getElementById('ep-birthday')?.value || '').trim();
+
+  if (!name)   { showToast('Name can\'t be empty', 'x'); return; }
+  if (!handle) { showToast('Username can\'t be empty', 'x'); return; }
+
+  DATA.user.name     = name;
+  DATA.user.handle   = '@' + handle;
+  DATA.user.bio      = bio;
+  DATA.user.location = location;
+  DATA.user.birthday = birthday;
+  DATA.user.visibility = Object.assign({}, DATA.user.visibility, {
+    publicProfile: document.getElementById('ep-vis-public')?.checked,
+    showLocation:  document.getElementById('ep-vis-location')?.checked,
+    shareActivity: document.getElementById('ep-vis-activity')?.checked,
+  });
+
+  showToast('Profile saved', 'check-circle');
+  navigate('profile', { force: true });
+}
+
+function updateEmail() {
+  const newEmail = document.getElementById('ae-new')?.value.trim();
+  const pw       = document.getElementById('ae-pw')?.value;
+  if (!newEmail || !/^\S+@\S+\.\S+$/.test(newEmail)) { showToast('Enter a valid email', 'x'); return; }
+  if (!pw) { showToast('Confirm with your password', 'x'); return; }
+  showToast(`Verification sent to ${newEmail}`, 'mail');
+  setTimeout(() => navigate('settings'), 500);
+}
+
+function updatePassword() {
+  const cur = document.getElementById('pw-current')?.value;
+  const nw  = document.getElementById('pw-new')?.value;
+  const cf  = document.getElementById('pw-confirm')?.value;
+  if (!cur) { showToast('Enter current password', 'x'); return; }
+  if (!nw || nw.length < 8) { showToast('New password too short', 'x'); return; }
+  if (nw !== cf) { showToast('Passwords don\'t match', 'x'); return; }
+  showToast('Password updated', 'check-circle');
+  setTimeout(() => navigate('settings'), 500);
+}
+
+function savePrivacy() {
+  DATA.user.visibility = Object.assign({}, DATA.user.visibility, {
+    publicProfile:   document.getElementById('pr-public')?.checked,
+    showLocation:    document.getElementById('pr-location')?.checked,
+    discoverable:    document.getElementById('pr-nearby')?.checked,
+    shareActivity:   document.getElementById('pr-activity')?.checked,
+    showLeaderboard: document.getElementById('pr-leaderboard')?.checked,
+    milestones:      document.getElementById('pr-milestones')?.checked,
+  });
+  showToast('Privacy updated', 'check-circle');
+  setTimeout(() => navigate('settings'), 500);
+}
+
+function setAppearance(mode) {
+  DATA.user.appearance = mode;
+  showToast(mode === 'system' ? 'Matching system' : `${mode.charAt(0).toUpperCase() + mode.slice(1)} mode`, 'check-circle');
+  // Re-render current screen to reflect selection state
+  navigate('appearance', { force: true });
+}
+
+function saveGoalPrefs() {
+  DATA.user.goalPrefs = Object.assign({}, DATA.user.goalPrefs, {
+    honorRest:      document.getElementById('gp-restdays')?.checked,
+    gracePeriod:    document.getElementById('gp-graceperiod')?.checked,
+    autoShare:      document.getElementById('gp-autoshare')?.checked,
+    morningNudge:   document.getElementById('gp-morning')?.checked,
+    eveningCheckin: document.getElementById('gp-evening')?.checked,
+  });
+  showToast('Preferences saved', 'check-circle');
+  setTimeout(() => navigate('settings'), 500);
+}
+
+function sendSupportMessage() {
+  const msg = document.getElementById('cs-msg')?.value.trim();
+  if (!msg || msg.length < 10) { showToast('Tell us a bit more', 'edit'); return; }
+  showToast('Message sent · we\'ll reply soon', 'send');
+  setTimeout(() => navigate('helpCenter'), 600);
+}
+
+function logOut() {
+  showToast('Logged out', 'log-out');
+  setTimeout(() => navigate('landing', { force: true }), 500);
+}
+
+function confirmDeleteAccount() {
+  const ok = window.confirm('Delete your acco account? This can\'t be undone. Your buddies will be notified.');
+  if (!ok) return;
+  showToast('Account deletion queued', 'x');
+  setTimeout(() => navigate('landing', { force: true }), 700);
+}
