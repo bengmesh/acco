@@ -122,6 +122,9 @@ SCREENS.dashboard = () => {
   const u = DATA.user;
   const hr = new Date().getHours();
   const greet = hr < 5 ? 'Late night,' : hr < 12 ? 'Good morning,' : hr < 18 ? 'Good afternoon,' : 'Good evening,';
+  const dueGoals = goalsDueToday();
+  const dueCount = dueGoals.length;
+  const isRestDay = dueCount === 0;
   return `
     ${statusBar()}
     ${header({
@@ -136,12 +139,14 @@ SCREENS.dashboard = () => {
     })}
     <div class="screen-body with-tabbar anim-in">
       <div class="hero-greeting">${greet}<br/>${u.name.split(' ')[0]}.</div>
-      <div class="hero-sub">You're on an ${u.stats.streak}-day streak. Don't break it today.</div>
+      <div class="hero-sub">${isRestDay
+        ? `Rest day. You're still on an ${u.stats.streak}-check-in streak — nothing due today.`
+        : `You're on an ${u.stats.streak}-check-in streak. ${dueCount} ${dueCount === 1 ? 'goal needs' : 'goals need'} you today.`}</div>
 
       <div class="stat-row">
         <div class="stat">
           <div class="stat-num"><span class="accent">${u.stats.streak}</span></div>
-          <div class="stat-lbl">Day streak</div>
+          <div class="stat-lbl">Check-in streak</div>
         </div>
         <div class="stat">
           <div class="stat-num">${u.stats.goalsActive}</div>
@@ -155,16 +160,26 @@ SCREENS.dashboard = () => {
 
       <div class="section">
         <div class="section-title">
-          <h3>Today's check-in</h3>
+          <h3>Today</h3>
         </div>
-        <button class="card clickable" onclick="navigate('checkin')" style="width:100%;text-align:left;display:flex;align-items:center;gap:var(--space-4);background:linear-gradient(135deg,rgba(198,242,78,0.12),rgba(198,242,78,0.03));border-color:rgba(198,242,78,0.25)">
-          <div class="icon-tile icon-tile-lg icon-tile-round icon-tile-primary-solid" style="box-shadow:var(--glow-primary)">${icon('check')}</div>
-          <div class="flex-1">
-            <div class="fw-600">Check in for today</div>
-            <div class="text-xs text-muted mt-1">3 goals need a yes/no from you</div>
+        ${isRestDay ? `
+          <div class="card row gap-4" style="align-items:center">
+            <div class="icon-tile icon-tile-lg icon-tile-round" style="background:var(--color-surface-3);color:var(--color-text-muted)">${icon('moon')}</div>
+            <div class="flex-1">
+              <div class="fw-600">Nothing scheduled today</div>
+              <div class="text-xs text-muted mt-1">Your streak is safe — rest is part of the plan.</div>
+            </div>
           </div>
-          <span style="color:var(--color-primary)">${icon('chevron-right')}</span>
-        </button>
+        ` : `
+          <button class="card clickable" onclick="navigate('checkin')" style="width:100%;text-align:left;display:flex;align-items:center;gap:var(--space-4);background:linear-gradient(135deg,rgba(198,242,78,0.12),rgba(198,242,78,0.03));border-color:rgba(198,242,78,0.25)">
+            <div class="icon-tile icon-tile-lg icon-tile-round icon-tile-primary-solid" style="box-shadow:var(--glow-primary)">${icon('check')}</div>
+            <div class="flex-1">
+              <div class="fw-600">Check in for today</div>
+              <div class="text-xs text-muted mt-1">${dueCount} ${dueCount === 1 ? 'goal needs' : 'goals need'} a yes/no from you</div>
+            </div>
+            <span style="color:var(--color-primary)">${icon('chevron-right')}</span>
+          </button>
+        `}
       </div>
 
       <div class="section">
@@ -192,12 +207,15 @@ SCREENS.dashboard = () => {
 };
 
 // ==================== CHECK-IN ====================
-SCREENS.checkin = () => `
+SCREENS.checkin = () => {
+  const due = goalsDueToday();
+  const dateLine = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  return `
   ${statusBar()}
   ${header({ back: 'dashboard', simple: true, right: `<div class="text-xs text-muted">Step 1 of 3</div>` })}
   <div class="screen-body anim-in">
-    <h2 style="font-family:var(--font-display);font-size:var(--text-xl);font-weight:600;letter-spacing:-0.02em;margin-bottom:var(--space-2)">Daily check-in</h2>
-    <p class="text-muted text-sm mb-6">Thursday, April 23 · Keep your ${DATA.user.stats.streak}-day streak alive.</p>
+    <h2 style="font-family:var(--font-display);font-size:var(--text-xl);font-weight:600;letter-spacing:-0.02em;margin-bottom:var(--space-2)">Check in</h2>
+    <p class="text-muted text-sm mb-6">${dateLine} · Keep your ${DATA.user.stats.streak}-check-in streak alive.</p>
 
     <div class="section" style="margin-top:0">
       <div class="section-title"><h3>How did today go?</h3></div>
@@ -219,21 +237,39 @@ SCREENS.checkin = () => `
     </div>
 
     <div class="section">
-      <div class="section-title"><h3>Goals — did you do them?</h3></div>
-      <div class="col gap-3">
-        ${DATA.goals.map(g => `
-          <div class="card card-compact row gap-3">
-            <div class="flex-1">
-              <div class="fw-600 text-sm">${g.title}</div>
-              <div class="text-xs text-muted mt-1">${g.category}</div>
-            </div>
-            <div class="segmented" style="--cols:2">
-              <button class="active" onclick="toggleSeg(this)">Yes</button>
-              <button onclick="toggleSeg(this)">No</button>
-            </div>
+      <div class="section-title"><h3>Goals due today</h3></div>
+      ${due.length === 0 ? `
+        <div class="card text-center" style="padding:var(--space-5)">
+          <div class="icon-tile icon-tile-lg icon-tile-round" style="background:var(--color-surface-3);color:var(--color-text-muted);margin:0 auto var(--space-3)">${icon('moon')}</div>
+          <div class="fw-600">No goals scheduled today</div>
+          <div class="text-xs text-muted mt-1">Your streak is safe. Log your mood if you want a record.</div>
+        </div>
+      ` : `
+        <div class="col gap-3">
+          ${due.map(g => {
+            const sub = g.cadence?.type === 'weekly'
+              ? `${cadenceLabel(g)} · ${g.weekProgress?.done ?? 0} of ${g.weekProgress?.target ?? g.cadence.target} this week`
+              : `${g.category} · ${cadenceLabel(g)}`;
+            return `
+              <div class="card card-compact row gap-3">
+                <div class="flex-1">
+                  <div class="fw-600 text-sm">${g.title}</div>
+                  <div class="text-xs text-muted mt-1">${sub}</div>
+                </div>
+                <div class="segmented" style="--cols:2">
+                  <button class="active" onclick="toggleSeg(this)">Yes</button>
+                  <button onclick="toggleSeg(this)">No</button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        ${DATA.goals.length > due.length ? `
+          <div class="text-xs text-muted mt-3" style="text-align:center">
+            ${DATA.goals.length - due.length} ${DATA.goals.length - due.length === 1 ? 'goal is' : 'goals are'} resting today — not part of today's check-in.
           </div>
-        `).join('')}
-      </div>
+        ` : ''}
+      `}
     </div>
 
     <div class="section">
@@ -248,7 +284,8 @@ SCREENS.checkin = () => `
       <button class="btn btn-ghost btn-block mt-2" onclick="navigate('dashboard')">Skip for now</button>
     </div>
   </div>
-`;
+  `;
+};
 
 // ==================== GOALS LIST ====================
 SCREENS.goals = () => `
@@ -342,13 +379,14 @@ SCREENS.createGoal2 = () => `
       <textarea class="textarea" placeholder="Why this goal, and what does success look like?">Build up to a half-marathon by October.</textarea>
     </div>
     <div class="field">
-      <label class="field-label">Frequency</label>
+      <label class="field-label">Cadence</label>
       <div class="segmented" style="--cols:4">
         <button>Daily</button>
-        <button class="active">Weekly</button>
-        <button>M-W-F</button>
+        <button class="active">3x / week</button>
+        <button>Mon–Fri</button>
         <button>Custom</button>
       </div>
+      <div class="text-xs text-muted mt-2">Your streak tracks the cadence you set. Off days don't break it.</div>
     </div>
     <div class="row gap-3">
       <div class="field flex-1">
@@ -413,30 +451,35 @@ SCREENS.goalDetail = () => {
     ${statusBar()}
     ${header({ back: 'goals', simple: true, right: `<button class="icon-btn" aria-label="More">${icon('more')}</button>` })}
     <div class="screen-body anim-in">
-      <span class="badge badge-primary">${g.category}</span>
+      <div class="row gap-2" style="flex-wrap:wrap">
+        <span class="badge badge-primary">${g.category}</span>
+        <span class="badge">${cadenceLabel(g)}</span>
+      </div>
       <h2 style="font-family:var(--font-display);font-size:var(--text-2xl);font-weight:600;letter-spacing:-0.02em;margin-top:var(--space-3);line-height:1.1">${g.title}</h2>
       <p class="text-muted text-sm mt-2">${g.desc}</p>
 
-      <div class="row gap-6 mt-6" style="align-items:center">
-        ${progressRing(g.progress, 120)}
-        <div class="col gap-3">
+      <div class="row gap-5 mt-6" style="align-items:center">
+        ${progressRing(g.progress, 104)}
+        <div class="col gap-3 flex-1" style="min-width:0">
           <div>
-            <div style="font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:-0.02em;color:var(--color-warning);display:inline-flex;align-items:center;gap:6px">${icon('flame')}${g.streak} days</div>
+            <div style="font-family:var(--font-display);font-size:20px;font-weight:600;letter-spacing:-0.02em;color:var(--color-warning);display:inline-flex;align-items:center;gap:6px;white-space:nowrap"><span style="width:20px;height:20px;display:inline-flex;flex-shrink:0">${icon('flame')}</span>${streakLabel(g)}</div>
             <div class="text-xs text-muted">Current streak</div>
           </div>
           <div>
-            <div style="font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:-0.02em">${g.checkIns}/${g.checkInsNeeded}</div>
+            <div style="font-family:var(--font-display);font-size:20px;font-weight:600;letter-spacing:-0.02em">${g.checkIns}/${g.checkInsNeeded}</div>
             <div class="text-xs text-muted">Check-ins</div>
           </div>
           <div>
-            <div style="font-family:var(--font-display);font-size:22px;font-weight:600;letter-spacing:-0.02em">${g.daysLeft}</div>
+            <div style="font-family:var(--font-display);font-size:20px;font-weight:600;letter-spacing:-0.02em">${g.daysLeft}</div>
             <div class="text-xs text-muted">Days remaining</div>
           </div>
         </div>
       </div>
 
+      ${g.cadence?.type === 'weekly' ? weekProgress(g) : ''}
+
       <button class="btn btn-primary btn-block mt-6" onclick="navigate('checkin')">
-        ${icon('check-circle')}<span>Check in for today</span>
+        ${icon('check-circle')}<span>${isDueOn(g) ? 'Check in for today' : 'Log a ' + g.category.toLowerCase() + ' session'}</span>
       </button>
 
       <div class="section">
@@ -798,9 +841,9 @@ SCREENS.profile = () => {
       </div>
 
       <div class="stat-row">
-        <div class="stat">
+        <div class="stat" title="Scheduled check-ins kept in a row — rest days don't break it">
           <div class="stat-num"><span class="accent">${u.stats.streak}</span></div>
-          <div class="stat-lbl">Day streak</div>
+          <div class="stat-lbl">Check-in streak</div>
         </div>
         <div class="stat">
           <div class="stat-num">${u.stats.goalsCompleted}</div>

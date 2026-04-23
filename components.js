@@ -203,11 +203,17 @@ function buddyRow(b) {
 
 // Goal card
 function goalCard(g) {
+  const isWeekly = g.cadence?.type === 'weekly';
+  const unit = g.streakUnit || 'days';
+  const unitShort = unit === 'weeks' ? 'week streak' : unit === 'weekdays' ? 'weekday streak' : 'day streak';
   return `
     <div class="goal-card ${g.featured ? 'goal-card-featured' : ''}" onclick="openGoal('${g.id}')">
       <div class="goal-card-head">
         <div style="flex:1;min-width:0">
-          <span class="badge badge-primary">${g.category}</span>
+          <div class="row gap-2" style="flex-wrap:wrap">
+            <span class="badge badge-primary">${g.category}</span>
+            <span class="badge">${cadenceLabel(g)}</span>
+          </div>
           <div class="goal-card-title" style="margin-top:8px">${g.title}</div>
           <div class="goal-card-desc">${g.desc}</div>
         </div>
@@ -215,11 +221,12 @@ function goalCard(g) {
           ${progressRing(g.progress, 56)}
         </div>
       </div>
+      ${isWeekly ? weekProgress(g) : ''}
       <div class="goal-card-foot">
         <div class="row gap-4">
           <div class="goal-card-stat">
             <div class="num"><em>${g.streak}</em></div>
-            <div class="lbl">day streak</div>
+            <div class="lbl">${unitShort}</div>
           </div>
           <div class="goal-card-stat">
             <div class="num">${g.daysLeft}</div>
@@ -233,6 +240,23 @@ function goalCard(g) {
           <span style="font-size:11px;color:var(--color-text-faint)">${g.supporters.length} supporters</span>
         </div>
       </div>
+    </div>
+  `;
+}
+
+// Weekly progress — pip row showing done/target for this week (for weekly-cadence goals)
+function weekProgress(g) {
+  const done = g.weekProgress?.done ?? 0;
+  const target = g.weekProgress?.target ?? g.cadence?.target ?? 1;
+  const pips = Array.from({length: target}, (_, i) => `<span class="week-pip ${i < done ? 'filled' : ''}"></span>`).join('');
+  const remaining = Math.max(0, target - done);
+  const label = done >= target
+    ? 'This week — locked in ✓'
+    : `This week · ${done} of ${target} · ${remaining} to go`;
+  return `
+    <div class="week-progress">
+      <div class="week-progress-label">${label}</div>
+      <div class="week-pips">${pips}</div>
     </div>
   `;
 }

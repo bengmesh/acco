@@ -9,7 +9,8 @@ const DATA = {
     avatarColor: 1,
     location: 'Houston, TX',
     joined: 'March 2025',
-    stats: { streak: 18, goalsActive: 3, goalsCompleted: 12, points: 2840, buddies: 14 }
+    // commitment streak = consecutive scheduled check-in windows kept (not calendar days)
+    stats: { streak: 18, streakUnit: 'check-ins', goalsActive: 3, goalsCompleted: 12, points: 2840, buddies: 14 }
   },
 
   buddies: [
@@ -21,15 +22,25 @@ const DATA = {
     { id: 'b6', name: 'Ethan Rivera',   handle: '@ethanr',       color: 7, streak: 4,  status: 'Just started a new goal', lastGoal: 'Walk 8k steps daily', online: true },
   ],
 
+  // Cadence model:
+  //   daily  — scheduled every day (streak unit = days)
+  //   weekly — hit N times per week, any days (streak unit = weeks)
+  //   days   — scheduled on specific weekdays (streak unit = scheduled days)
+  // weekProgress.done / target applies to weekly goals (resets Monday).
+  // dueToday flags whether today contributes to this goal's streak.
   goals: [
     {
       id: 'g1',
       title: 'Run 3x per week',
       desc: 'Build to a half-marathon by October',
       category: 'Cardio',
+      cadence: { type: 'weekly', target: 3 },
       progress: 72,
       daysLeft: 42,
-      streak: 18,
+      streak: 6,              // 6 weeks in a row hitting 3 runs
+      streakUnit: 'weeks',
+      weekProgress: { done: 2, target: 3 },
+      dueToday: true,         // flexible — can choose to run today
       supporters: ['b1', 'b3', 'b5'],
       checkIns: 32,
       checkInsNeeded: 44,
@@ -40,9 +51,12 @@ const DATA = {
       title: 'Meditate 10 min daily',
       desc: 'Morning routine before the kids wake',
       category: 'Mindfulness',
+      cadence: { type: 'daily' },
       progress: 45,
       daysLeft: 28,
       streak: 9,
+      streakUnit: 'days',
+      dueToday: true,
       supporters: ['b3', 'b2'],
       checkIns: 14,
       checkInsNeeded: 30,
@@ -52,9 +66,12 @@ const DATA = {
       title: 'No added sugar — weekdays',
       desc: 'Monday through Friday, clean eating',
       category: 'Nutrition',
+      cadence: { type: 'days', days: [1, 2, 3, 4, 5] }, // Mon-Fri
       progress: 88,
       daysLeft: 12,
       streak: 18,
+      streakUnit: 'weekdays',
+      dueToday: true,         // Thursday is a weekday
       supporters: ['b4', 'b6'],
       checkIns: 22,
       checkInsNeeded: 25,
@@ -74,8 +91,8 @@ const DATA = {
   notifications: [
     { id: 'n1', type: 'cheer',    icon: 'heart',    color: 'pink',   text: '<strong>Priya</strong> and <strong>Maya</strong> cheered your 18-day streak', time: '8 min ago', unread: true },
     { id: 'n2', type: 'buddy',    icon: 'user-plus', color: 'blue',  text: '<strong>Marcus Okafor</strong> accepted your buddy request', time: '2 hr ago', unread: true },
-    { id: 'n3', type: 'reminder', icon: 'bell',    color: 'green',  text: 'Don\'t forget your daily check-in — you\'re on an 18-day streak', time: '4 hr ago', unread: true },
-    { id: 'n4', type: 'badge',    icon: 'award',   color: 'green',  text: 'You earned the <strong>Consistent</strong> badge — 2 weeks of daily check-ins', time: 'Yesterday', unread: false },
+    { id: 'n3', type: 'reminder', icon: 'bell',    color: 'green',  text: '2 goals are due today — keep your 18 check-in streak alive', time: '4 hr ago', unread: true },
+    { id: 'n4', type: 'badge',    icon: 'award',   color: 'green',  text: 'You earned the <strong>Consistent</strong> badge — 14 commitments kept in a row', time: 'Yesterday', unread: false },
     { id: 'n5', type: 'message',  icon: 'message-circle', color: 'blue', text: '<strong>Derek</strong> sent you encouragement: "Keep pushing — this week is yours"', time: 'Yesterday', unread: false },
     { id: 'n6', type: 'reminder', icon: 'bell',    color: 'orange', text: '<strong>Derek</strong> missed his check-in yesterday — maybe send a boost?', time: '2 days ago', unread: false },
   ],
@@ -126,3 +143,44 @@ function initials(name) {
 }
 
 function findBuddy(id) { return DATA.buddies.find(b => b.id === id) || DATA.user; }
+
+// ===== Cadence helpers =====
+// Describe a goal's cadence in human copy, e.g. "3x per week" / "Daily" / "Mon-Fri".
+function cadenceLabel(g) {
+  const c = g.cadence || { type: 'daily' };
+  if (c.type === 'daily')  return 'Daily';
+  if (c.type === 'weekly') return `${c.target}x per week`;
+  if (c.type === 'days') {
+    const names = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const d = (c.days || []).slice().sort();
+    if (d.length === 5 && d.join(',') === '1,2,3,4,5') return 'Mon – Fri';
+    if (d.length === 2 && d.join(',') === '0,6')       return 'Weekends';
+    if (d.length === 7) return 'Daily';
+    return d.map(i => names[i]).join(' · ');
+  }
+  return 'Daily';
+}
+
+// Is this goal scheduled to contribute to streak on the given date?
+function isDueOn(g, date = new Date()) {
+  const c = g.cadence || { type: 'daily' };
+  if (c.type === 'daily')  return true;
+  if (c.type === 'weekly') return (g.weekProgress?.done ?? 0) < (g.weekProgress?.target ?? c.target);
+  if (c.type === 'days')   return (c.days || []).includes(date.getDay());
+  return true;
+}
+
+// Goals that need a yes/no answer today (for the check-in prompt).
+function goalsDueToday(date = new Date()) {
+  return DATA.goals.filter(g => g.dueToday !== false && isDueOn(g, date));
+}
+
+// Human streak line for a single goal, e.g. "6-week streak", "9-day streak".
+function streakLabel(g) {
+  const n = g.streak;
+  if (n <= 0) return 'No streak yet';
+  const unit = g.streakUnit || 'days';
+  if (unit === 'weeks')    return `${n}-week streak`;
+  if (unit === 'weekdays') return `${n}-weekday streak`;
+  return `${n}-day streak`;
+}
