@@ -125,6 +125,141 @@ const DATA = {
     { id: 's4', name: 'Tomás Rivera',   handle: '@tomasr',     color: 3, mutual: 1, focus: 'Climbing, hiking' },
   ],
 
+  // ===== Connected health sources =====
+  // Simulates Apple Health / Strava / wearable integrations. `connected` flips the UI state.
+  healthSources: [
+    { id: 'apple',    name: 'Apple Health', brand: 'apple',   color: '#ffffff', connected: true,  summary: 'Steps, workouts, sleep, heart rate' },
+    { id: 'strava',   name: 'Strava',       brand: 'strava',  color: '#fc5200', connected: true,  summary: 'Runs, rides, workouts' },
+    { id: 'whoop',    name: 'Whoop',        brand: 'whoop',   color: '#e7e7e7', connected: false, summary: 'Recovery + strain' },
+    { id: 'oura',     name: 'Oura Ring',    brand: 'oura',    color: '#a0c8ff', connected: false, summary: 'Sleep + readiness' },
+    { id: 'garmin',   name: 'Garmin',       brand: 'garmin',  color: '#007cc3', connected: false, summary: 'Activity + training load' },
+    { id: 'mfp',      name: 'MyFitnessPal', brand: 'mfp',     color: '#005daa', connected: false, summary: 'Nutrition + macros' },
+    { id: 'calendar', name: 'Calendar',     brand: 'calendar',color: '#4285f4', connected: false, summary: 'Auto-schedule from workouts you block' },
+  ],
+
+  // ===== Public challenges =====
+  challenges: [
+    {
+      id: 'c1',
+      title: 'April 30-Day Run Streak',
+      tag: 'Running',
+      desc: 'Run at least 1 mile every day in April. No buddy required — join solo, we’ll match you with a cohort.',
+      participants: 8421,
+      endsIn: '7 days',
+      daysIn: 23,
+      daysTotal: 30,
+      joined: true,
+      reward: 'Finisher badge + 500 points',
+      featured: true,
+      topParticipants: ['b1', 'b3', 'b5']
+    },
+    {
+      id: 'c2',
+      title: 'Morning Mindful — 21 Days',
+      tag: 'Mindfulness',
+      desc: '10 minutes of meditation before 9am for 21 days. Great for starting a daily practice.',
+      participants: 2140,
+      endsIn: 'Starts Monday',
+      daysIn: 0,
+      daysTotal: 21,
+      joined: false,
+      reward: 'Mindful badge + 250 points',
+      topParticipants: ['b3', 'b4']
+    },
+    {
+      id: 'c3',
+      title: 'Squat Century',
+      tag: 'Strength',
+      desc: '100 bodyweight squats a day for 14 days. Takes under 4 minutes.',
+      participants: 3602,
+      endsIn: '3 days left to join',
+      daysIn: 0,
+      daysTotal: 14,
+      joined: false,
+      reward: 'Centurion badge + 300 points',
+      topParticipants: ['b2', 'b6']
+    },
+    {
+      id: 'c4',
+      title: 'No Added Sugar — Weekdays',
+      tag: 'Nutrition',
+      desc: 'Clean eating Monday through Friday for 4 weeks. Weekends are yours.',
+      participants: 1287,
+      endsIn: 'Rolling — start anytime',
+      daysIn: 0,
+      daysTotal: 20,
+      joined: false,
+      reward: 'Clean Plate badge + 200 points',
+      topParticipants: ['b4']
+    },
+  ],
+
+  // ===== Groups / squads =====
+  groups: [
+    {
+      id: 'gr1',
+      name: 'Morning Runners Houston',
+      emoji: '🏃',
+      city: 'Houston, TX',
+      memberCount: 18,
+      groupStreak: 42,
+      focus: 'Running · 5am meetups',
+      description: 'Houstonians who run before sunrise. Hop on the group chat for meetup spots.',
+      members: ['me', 'b1', 'b3', 'b5', 'b6'],
+      joined: true,
+      activity: [
+        { actor: 'b1', text: 'logged a 6am run — 4.2 miles at Memorial Park', time: '1h ago' },
+        { actor: 'b5', text: 'posted a route for Saturday: Buffalo Bayou loop, 8mi', time: '3h ago' },
+        { actor: 'b3', text: 'crushed hill repeats and shared her splits', time: 'Yesterday' },
+      ],
+    },
+    {
+      id: 'gr2',
+      name: 'Dad Fit Collective',
+      emoji: '💪',
+      city: '— Global',
+      memberCount: 126,
+      groupStreak: 91,
+      focus: 'Strength · 3x/week',
+      description: 'Busy dads keeping each other strong. Kids-welcome workout videos encouraged.',
+      members: ['b2', 'b4', 'b6'],
+      joined: false,
+      activity: [
+        { actor: 'b2', text: 'hit a deadlift PR: 315lb × 3', time: '2h ago' },
+        { actor: 'b4', text: 'shared a 20-min garage circuit', time: 'Yesterday' },
+      ],
+    },
+    {
+      id: 'gr3',
+      name: 'Calm Squad',
+      emoji: '🧘',
+      city: '— Global',
+      memberCount: 67,
+      groupStreak: 128,
+      focus: 'Meditation · Daily',
+      description: 'Mindfulness practitioners of all levels. Weekly guided session every Sunday.',
+      members: ['b3'],
+      joined: false,
+      activity: [
+        { actor: 'b3', text: 'finished day 52 of her meditation streak', time: '4h ago' },
+      ],
+    },
+  ],
+
+  // ===== Auto-detected activity (from connected sources) =====
+  detectedActivity: [
+    { id: 'da1', source: 'apple',  sourceLabel: 'Apple Health', type: 'Outdoor Run', value: '5.2 mi', duration: '48 min', time: 'This morning, 6:12am', matchedGoal: 'g1' },
+    { id: 'da2', source: 'strava', sourceLabel: 'Strava',       type: 'Morning Run', value: '5.2 mi', duration: '48 min', time: 'This morning, 6:12am', matchedGoal: 'g1' },
+    { id: 'da3', source: 'apple',  sourceLabel: 'Apple Health', type: 'Mindful Minutes', value: '12 min', duration: '12 min', time: 'This morning, 5:48am', matchedGoal: 'g2' },
+  ],
+
+  // ===== Nearby / matched buddies =====
+  nearbyBuddies: [
+    { id: 'nb1', name: 'Rosa Patel',    handle: '@rosapatel',  color: 2, distance: '1.2 mi away', focus: 'Running · 3x/wk', mutual: 3 },
+    { id: 'nb2', name: 'Kai Johansson', handle: '@kaij',       color: 4, distance: 'Same zip',    focus: 'Meditation daily',  mutual: 1 },
+    { id: 'nb3', name: 'Devin Ortiz',   handle: '@devinortiz', color: 5, distance: '3.4 mi away', focus: 'Strength 4x/wk',    mutual: 2 },
+  ],
+
   goalTemplates: [
     { emoji: '🏃', label: 'Run regularly',        desc: '3x per week' },
     { emoji: '🧘', label: 'Daily meditation',     desc: '10 minutes' },

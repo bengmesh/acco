@@ -192,6 +192,63 @@ SCREENS.dashboard = () => {
         </div>
       </div>
 
+      ${DATA.detectedActivity.length ? `
+        <div class="section">
+          <div class="section-title"><h3>Auto-detected</h3><a href="#" onclick="navigate('integrations');return false">Sources</a></div>
+          <div class="card card-detected">
+            <div class="row gap-3" style="align-items:flex-start">
+              <div class="source-chip" data-brand="${DATA.detectedActivity[0].source}">${icon(DATA.detectedActivity[0].source === 'strava' ? 'strava' : 'apple')}</div>
+              <div class="flex-1" style="min-width:0">
+                <div class="fw-600 text-sm">${DATA.detectedActivity[0].sourceLabel} saw your ${DATA.detectedActivity[0].value} ${DATA.detectedActivity[0].type.toLowerCase()}</div>
+                <div class="text-xs text-muted mt-1">${DATA.detectedActivity[0].time}. Count it toward <span style="color:var(--color-primary)">${(DATA.goals.find(x=>x.id===DATA.detectedActivity[0].matchedGoal)||{}).title||'your goal'}</span>?</div>
+              </div>
+            </div>
+            <div class="row gap-2 mt-4">
+              <button class="btn btn-primary btn-sm flex-1" onclick="acceptDetected(this)">${icon('check')}<span>Yes, log it</span></button>
+              <button class="btn btn-ghost btn-sm" onclick="dismissDetected(this)">Dismiss</button>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+
+      <div class="section">
+        <div class="section-title"><h3>Featured challenge</h3><a href="#" onclick="navigate('challenges');return false">All</a></div>
+        ${(() => { const c = DATA.challenges.find(x => x.featured) || DATA.challenges[0]; return challengeCard(c, true); })()}
+      </div>
+
+      <div class="section">
+        <div class="section-title"><h3>Your groups</h3><a href="#" onclick="navigate('groups');return false">See all</a></div>
+        <div class="row gap-3" style="overflow-x:auto;padding-bottom:8px;margin:0 calc(var(--space-5) * -1);padding-left:var(--space-5);padding-right:var(--space-5)">
+          ${DATA.groups.filter(g => g.joined).concat(DATA.groups.filter(g => !g.joined).slice(0,2)).map(g => `
+            <button class="group-chip clickable" onclick="openGroup('${g.id}')">
+              <div class="group-emoji">${g.emoji}</div>
+              <div class="fw-600 text-sm mt-2">${g.name}</div>
+              <div class="group-meta mt-1">
+                <span class="group-meta-chip" style="color:var(--color-text-muted)"><span class="group-meta-ico">${icon('users')}</span>${g.memberCount}</span>
+                <span class="group-meta-chip" style="color:var(--color-warning);font-weight:600"><span class="group-meta-ico">${icon('flame')}</span>${g.groupStreak}d</span>
+              </div>
+              ${g.joined ? '<span class="badge badge-success" style="margin-top:auto">Joined</span>' : ''}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><h3>People near you</h3><a href="#" onclick="navigate('nearby');return false">See all</a></div>
+        <div class="col gap-2">
+          ${DATA.nearbyBuddies.slice(0,2).map(b => `
+            <div class="card row gap-3" style="align-items:center;padding:var(--space-3) var(--space-4)">
+              ${avatar(b)}
+              <div class="flex-1" style="min-width:0">
+                <div class="fw-600 text-sm">${b.name}</div>
+                <div class="text-xs text-muted mt-1">${b.focus} · ${b.distance}</div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="sendBuddyRequest(this, '${b.name}')">${icon('user-plus')}<span>Add</span></button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
       <div class="section">
         <div class="section-title">
           <h3>Your squad's activity</h3>
@@ -543,6 +600,15 @@ SCREENS.buddies = () => `
       <input class="input" placeholder="Search your buddies..." />
     </div>
 
+    <button class="card clickable mb-5" onclick="navigate('nearby')" style="width:100%;text-align:left;display:flex;align-items:center;gap:var(--space-4);background:linear-gradient(135deg,rgba(198,242,78,0.10),rgba(198,242,78,0.02));border-color:rgba(198,242,78,0.22)">
+      <div class="icon-tile icon-tile-lg icon-tile-round icon-tile-primary-solid">${icon('map-pin')}</div>
+      <div class="flex-1">
+        <div class="fw-600">People near you</div>
+        <div class="text-xs text-muted mt-1">${DATA.nearbyBuddies.length} runners and lifters within 5 miles</div>
+      </div>
+      <span style="color:var(--color-primary)">${icon('chevron-right')}</span>
+    </button>
+
     <div class="section-title"><h3>Online now</h3></div>
     <div class="col gap-2 mb-6">
       ${DATA.buddies.filter(b => b.online).map(buddyRow).join('')}
@@ -836,7 +902,7 @@ SCREENS.profile = () => {
         <p class="text-sm text-muted mt-3" style="max-width:32ch">${u.bio}</p>
         <div class="row gap-2 mt-4">
           <button class="btn btn-secondary btn-sm">${icon('edit')}<span>Edit profile</span></button>
-          <button class="btn btn-secondary btn-sm">${icon('share')}<span>Share</span></button>
+          <button class="btn btn-secondary btn-sm" onclick="navigate('share-profile')">${icon('share')}<span>Share</span></button>
         </div>
       </div>
 
@@ -985,3 +1051,419 @@ SCREENS.badges = () => `
     </div>
   </div>
 `;
+
+
+// ==================== INTEGRATIONS (Health sources) ====================
+SCREENS.integrations = () => {
+  const connected = DATA.healthSources.filter(s => s.connected);
+  const available = DATA.healthSources.filter(s => !s.connected);
+  const row = (s) => `
+    <div class="source-row">
+      <div class="source-brand" data-brand="${s.brand}">${icon(s.brand === 'strava' ? 'strava' : s.brand === 'apple' ? 'apple' : 'activity')}</div>
+      <div class="flex-1" style="min-width:0">
+        <div class="fw-600 text-sm">${s.name}</div>
+        <div class="text-xs text-muted mt-1">${s.summary}</div>
+      </div>
+      <button class="btn btn-sm ${s.connected ? 'btn-secondary' : 'btn-primary'}" onclick="toggleSource('${s.id}', this)">
+        ${s.connected ? 'Disconnect' : 'Connect'}
+      </button>
+    </div>
+  `;
+  return `
+    ${statusBar()}
+    ${header({ title: 'Integrations', subtitle: 'Auto-log activity from your apps', back: 'dashboard' })}
+    <div class="screen-body anim-in">
+      <div class="card" style="background:linear-gradient(135deg,rgba(198,242,78,0.10),rgba(198,242,78,0.02));border-color:rgba(198,242,78,0.22)">
+        <div class="row gap-3" style="align-items:center">
+          <div class="icon-tile icon-tile-lg icon-tile-round icon-tile-primary-solid">${icon('sparkles')}</div>
+          <div class="flex-1">
+            <div class="fw-600">Auto-detect your workouts</div>
+            <div class="text-xs text-muted mt-1">We'll match activity to your goals so you don't have to log manually.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><h3>Connected · ${connected.length}</h3></div>
+        <div class="col gap-2">${connected.map(row).join('') || '<div class="text-sm text-muted">No sources connected yet.</div>'}</div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><h3>Available</h3></div>
+        <div class="col gap-2">${available.map(row).join('')}</div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><h3>Recently detected</h3></div>
+        <div class="card" style="padding:0">
+          ${DATA.detectedActivity.map(d => {
+            const g = DATA.goals.find(x => x.id === d.matchedGoal);
+            return `
+              <div class="detected-row">
+                <div class="source-chip" data-brand="${d.source}">${icon(d.source === 'strava' ? 'strava' : d.source === 'apple' ? 'apple' : 'activity')}</div>
+                <div class="flex-1" style="min-width:0">
+                  <div class="fw-600 text-sm">${d.type} · ${d.value}</div>
+                  <div class="text-xs text-muted mt-1">${d.sourceLabel} · ${d.time}${g ? ` · Matched to <span style="color:var(--color-primary)">${g.title}</span>` : ''}</div>
+                </div>
+                <button class="icon-btn" style="width:32px;height:32px" onclick="showToast('Refreshed', 'refresh')" aria-label="Refresh">${icon('refresh')}</button>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+// ==================== CHALLENGES LIST ====================
+SCREENS.challenges = () => {
+  const joined = DATA.challenges.filter(c => c.joined);
+  const discover = DATA.challenges.filter(c => !c.joined);
+  return `
+    ${statusBar()}
+    ${header({ title: 'Challenges', subtitle: 'Public events · Solo or squad', back: 'dashboard' })}
+    <div class="screen-body anim-in">
+      ${joined.length ? `
+        <div class="section" style="margin-top:0">
+          <div class="section-title"><h3>You're in</h3></div>
+          <div class="col gap-3">${joined.map(c => challengeCard(c, true)).join('')}</div>
+        </div>
+      ` : ''}
+
+      <div class="section">
+        <div class="section-title"><h3>Discover</h3><span class="text-xs text-muted">${discover.length} open</span></div>
+        <div class="col gap-3">${discover.map(c => challengeCard(c, false)).join('')}</div>
+      </div>
+    </div>
+  `;
+};
+
+function challengeCard(c, featured) {
+  const pct = c.daysTotal ? Math.round((c.daysIn / c.daysTotal) * 100) : 0;
+  return `
+    <div class="card card-challenge clickable ${featured ? 'card-challenge-featured' : ''}" onclick="openChallenge('${c.id}')">
+      <div class="row gap-2" style="flex-wrap:wrap">
+        <span class="badge badge-primary">${c.tag}</span>
+        ${c.joined ? `<span class="badge badge-success">Joined</span>` : ''}
+        <span class="badge">${c.endsIn}</span>
+      </div>
+      <div class="fw-600 mt-3" style="font-size:var(--text-base);line-height:1.3">${c.title}</div>
+      <div class="text-xs text-muted mt-1" style="line-height:1.5">${c.desc}</div>
+      ${c.joined ? `
+        <div class="challenge-progress">
+          <div class="challenge-progress-bar"><div style="width:${pct}%"></div></div>
+          <div class="text-xs text-muted mt-2">Day ${c.daysIn} of ${c.daysTotal} · ${pct}%</div>
+        </div>
+      ` : ''}
+      <div class="row" style="justify-content:space-between;align-items:center;margin-top:var(--space-3)">
+        <div class="row gap-2" style="align-items:center">
+          <div class="avatar-stack">${(c.topParticipants || []).slice(0,3).map(id => avatar(findBuddy(id), 'sm')).join('')}</div>
+          <span class="text-xs text-muted">${c.participants.toLocaleString()} in</span>
+        </div>
+        <span class="text-xs" style="color:var(--color-primary);display:inline-flex;align-items:center;gap:4px">${icon('award')}<span>${c.reward.split(' + ')[0]}</span></span>
+      </div>
+    </div>
+  `;
+}
+
+// ==================== CHALLENGE DETAIL ====================
+SCREENS.challengeDetail = () => {
+  const c = DATA.challenges.find(x => x.id === APP.currentChallengeId) || DATA.challenges[0];
+  const pct = c.daysTotal ? Math.round((c.daysIn / c.daysTotal) * 100) : 0;
+  return `
+    ${statusBar()}
+    ${header({ back: 'challenges', simple: true, right: `<button class="icon-btn" aria-label="Share" onclick="showToast('Link copied', 'copy')">${icon('share')}</button>` })}
+    <div class="screen-body anim-in">
+      <div class="row gap-2" style="flex-wrap:wrap">
+        <span class="badge badge-primary">${c.tag}</span>
+        ${c.joined ? `<span class="badge badge-success">Joined</span>` : `<span class="badge">${c.endsIn}</span>`}
+      </div>
+      <h2 style="font-family:var(--font-display);font-size:var(--text-xl);font-weight:600;letter-spacing:-0.02em;margin-top:var(--space-3)">${c.title}</h2>
+      <p class="text-sm text-muted mt-2">${c.desc}</p>
+
+      ${c.joined ? `
+        <div class="card mt-5">
+          <div class="row" style="justify-content:space-between;align-items:baseline">
+            <div class="fw-600">Your progress</div>
+            <div class="text-sm" style="color:var(--color-primary);font-weight:600">${pct}%</div>
+          </div>
+          <div class="challenge-progress-bar mt-3"><div style="width:${pct}%"></div></div>
+          <div class="text-xs text-muted mt-2">Day ${c.daysIn} of ${c.daysTotal} · ${c.daysTotal - c.daysIn} to go</div>
+        </div>
+      ` : ''}
+
+      <div class="stat-row mt-5">
+        <div class="stat">
+          <div class="stat-num">${c.participants.toLocaleString()}</div>
+          <div class="stat-lbl">Participants</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">${c.daysTotal}</div>
+          <div class="stat-lbl">Days</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">${c.endsIn.replace(/ days?$/, '')}</div>
+          <div class="stat-lbl">${c.joined ? 'Left' : 'Start'}</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><h3>Reward</h3></div>
+        <div class="card row gap-3" style="align-items:center">
+          <div class="icon-tile icon-tile-lg icon-tile-round icon-tile-primary-solid">${icon('award')}</div>
+          <div class="flex-1">
+            <div class="fw-600 text-sm">${c.reward}</div>
+            <div class="text-xs text-muted mt-1">Unlocked after finishing</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><h3>Top participants</h3></div>
+        <div class="col gap-2">
+          ${(c.topParticipants || []).map((id, i) => {
+            const b = findBuddy(id);
+            return `
+              <div class="list-row" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-3) var(--space-4)">
+                <div class="fw-600" style="width:24px;text-align:center;color:var(--color-text-muted);font-size:var(--text-sm)">${i+1}</div>
+                ${avatar(b, 'sm')}
+                <div class="list-row-main">
+                  <div class="list-row-title" style="font-size:var(--text-sm)">${b.name}</div>
+                  <div class="list-row-sub">${b.streak}-day streak</div>
+                </div>
+                <span style="display:inline-flex;align-items:center;gap:4px;color:var(--color-warning);font-size:var(--text-xs);font-weight:600">${icon('flame')}<span>${b.streak}</span></span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="mt-6">
+        ${c.joined
+          ? `<button class="btn btn-secondary btn-block" onclick="showToast('You left the challenge', 'x')">Leave challenge</button>`
+          : `<button class="btn btn-primary btn-block" onclick="joinChallenge('${c.id}')">${icon('plus')}<span>Join challenge</span></button>`}
+      </div>
+    </div>
+  `;
+};
+
+// ==================== GROUPS LIST ====================
+SCREENS.groups = () => {
+  const joined = DATA.groups.filter(g => g.joined);
+  const discover = DATA.groups.filter(g => !g.joined);
+  return `
+    ${statusBar()}
+    ${header({ title: 'Groups', subtitle: 'Small squads, shared accountability', back: 'dashboard' })}
+    <div class="screen-body anim-in">
+      ${joined.length ? `
+        <div class="section" style="margin-top:0">
+          <div class="section-title"><h3>Your groups</h3></div>
+          <div class="col gap-3">${joined.map(groupCard).join('')}</div>
+        </div>
+      ` : ''}
+
+      <div class="section">
+        <div class="section-title"><h3>Discover</h3><span class="text-xs text-muted">${discover.length} open</span></div>
+        <div class="col gap-3">${discover.map(groupCard).join('')}</div>
+      </div>
+
+      <button class="card clickable mt-4" style="width:100%;border-style:dashed;text-align:center;color:var(--color-text-muted);padding:var(--space-6)" onclick="showToast('Group creation coming soon', 'sparkles')">
+        <div class="icon-tile icon-tile-lg icon-tile-round" style="background:var(--color-surface-3);color:var(--color-text-muted);margin:0 auto">${icon('plus')}</div>
+        <div class="fw-600 mt-3">Start a group</div>
+        <div class="text-xs mt-1">Invite friends or open it publicly</div>
+      </button>
+    </div>
+  `;
+};
+
+function groupCard(g) {
+  return `
+    <div class="card card-group clickable" onclick="openGroup('${g.id}')">
+      <div class="row gap-3" style="align-items:flex-start">
+        <div class="group-emoji">${g.emoji}</div>
+        <div class="flex-1" style="min-width:0">
+          <div class="fw-600" style="font-size:var(--text-base);line-height:1.3">${g.name}</div>
+          <div class="text-xs text-muted mt-1">${g.focus}</div>
+          <div class="group-meta mt-2">
+            <span class="group-meta-chip" style="color:var(--color-text-muted)"><span class="group-meta-ico">${icon('users')}</span><span>${g.memberCount} members</span></span>
+            <span class="group-meta-chip" style="color:var(--color-warning);font-weight:600"><span class="group-meta-ico">${icon('flame')}</span><span>${g.groupStreak}-day streak</span></span>
+            ${g.joined ? `<span class="badge badge-success">Joined</span>` : ''}
+          </div>
+        </div>
+        <span style="color:var(--color-text-faint)">${icon('chevron-right')}</span>
+      </div>
+    </div>
+  `;
+}
+
+// ==================== GROUP DETAIL ====================
+SCREENS.groupDetail = () => {
+  const g = DATA.groups.find(x => x.id === APP.currentGroupId) || DATA.groups[0];
+  const memberObjs = g.members.map(id => id === 'me' ? DATA.user : findBuddy(id));
+  return `
+    ${statusBar()}
+    ${header({ back: 'groups', simple: true, right: `<button class="icon-btn" aria-label="More" onclick="showToast('Invite link copied', 'copy')">${icon('share')}</button>` })}
+    <div class="screen-body anim-in">
+      <div class="col" style="align-items:center;text-align:center;padding:var(--space-3) 0">
+        <div class="group-emoji group-emoji-xl">${g.emoji}</div>
+        <h2 style="font-family:var(--font-display);font-size:var(--text-xl);font-weight:600;letter-spacing:-0.02em;margin-top:var(--space-3)">${g.name}</h2>
+        <div class="text-muted text-sm mt-1">${g.focus} · ${g.city}</div>
+        <p class="text-sm text-muted mt-3" style="max-width:34ch">${g.description}</p>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat">
+          <div class="stat-num">${g.memberCount}</div>
+          <div class="stat-lbl">Members</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num"><span class="accent">${g.groupStreak}</span></div>
+          <div class="stat-lbl">Group streak</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">${g.activity.length}</div>
+          <div class="stat-lbl">This week</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><h3>Members</h3><a href="#" onclick="showToast('Full member list coming soon');return false">See all</a></div>
+        <div class="row gap-3" style="overflow-x:auto;padding-bottom:8px">
+          ${memberObjs.slice(0,8).map(m => `
+            <div class="col" style="align-items:center;text-align:center;flex-shrink:0;width:64px">
+              ${avatar(m)}
+              <div class="text-xs fw-600 mt-2" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:64px">${m.name.split(' ')[0]}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><h3>Group activity</h3></div>
+        <div class="card" style="padding:0 var(--space-5)">
+          ${g.activity.map(a => {
+            const actor = findBuddy(a.actor);
+            return `
+              <div class="activity-item">
+                ${avatar(actor)}
+                <div class="activity-body">
+                  <div class="activity-text"><strong>${actor.name}</strong> ${a.text}</div>
+                  <div class="activity-time">${a.time}</div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="mt-6">
+        ${g.joined
+          ? `<button class="btn btn-secondary btn-block" onclick="showToast('Left the group', 'x')">Leave group</button>`
+          : `<button class="btn btn-primary btn-block" onclick="joinGroup('${g.id}')">${icon('plus')}<span>Join group</span></button>`}
+      </div>
+    </div>
+  `;
+};
+
+// ==================== NEARBY / BUDDY MATCHMAKING ====================
+SCREENS.nearby = () => {
+  return `
+    ${statusBar()}
+    ${header({ title: 'People near you', subtitle: `${DATA.user.location}`, back: 'buddies' })}
+    <div class="screen-body anim-in">
+      <div class="card" style="background:linear-gradient(135deg,rgba(198,242,78,0.10),rgba(198,242,78,0.02));border-color:rgba(198,242,78,0.22)">
+        <div class="row gap-3" style="align-items:center">
+          <div class="icon-tile icon-tile-lg icon-tile-round icon-tile-primary-solid">${icon('map-pin')}</div>
+          <div class="flex-1">
+            <div class="fw-600">Matched by goals + location</div>
+            <div class="text-xs text-muted mt-1">Same focus, close by. Better accountability.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><h3>Nearby</h3><span class="text-xs text-muted">${DATA.nearbyBuddies.length} found</span></div>
+        <div class="col gap-3">
+          ${DATA.nearbyBuddies.map(b => `
+            <div class="card row gap-3" style="align-items:center">
+              ${avatar(b)}
+              <div class="flex-1" style="min-width:0">
+                <div class="fw-600 text-sm">${b.name}</div>
+                <div class="text-xs text-muted mt-1">${b.focus}</div>
+                <div class="row gap-3 mt-2" style="align-items:center">
+                  <span class="text-xs" style="display:inline-flex;align-items:center;gap:4px;color:var(--color-text-muted)"><span class="group-meta-ico">${icon('map-pin')}</span><span>${b.distance}</span></span>
+                  <span class="text-xs text-muted">${b.mutual} mutual</span>
+                </div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="sendBuddyRequest(this, '${b.name}')">${icon('user-plus')}<span>Add</span></button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="card text-center mt-4" style="padding:var(--space-5)">
+        <div class="text-xs text-muted">Location is fuzzy — we never share your exact address.</div>
+      </div>
+    </div>
+  `;
+};
+
+// ==================== SHARE PROFILE ====================
+SCREENS.shareProfile = () => {
+  const u = DATA.user;
+  const url = `acco.fit/${u.handle.slice(1)}`;
+  // Simple geometric QR-style placeholder
+  const qrSize = 12;
+  let cells = '';
+  // Deterministic pseudo-random pattern based on handle
+  const seed = u.handle.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  for (let y = 0; y < qrSize; y++) {
+    for (let x = 0; x < qrSize; x++) {
+      const isFinderZone = (x < 3 && y < 3) || (x > qrSize - 4 && y < 3) || (x < 3 && y > qrSize - 4);
+      const isFinderCell = (x === 0 || x === 2 || y === 0 || y === 2 || (x === 1 && y === 1))
+        && ((x < 3 && y < 3) || (x > qrSize - 4 && y < 3) || (x < 3 && y > qrSize - 4));
+      const on = isFinderZone ? isFinderCell : ((x * 37 + y * 59 + seed) % 7 < 3);
+      if (on) cells += `<rect x="${x}" y="${y}" width="1" height="1" fill="currentColor"/>`;
+    }
+  }
+  return `
+    ${statusBar()}
+    ${header({ title: 'Share profile', back: 'profile' })}
+    <div class="screen-body anim-in">
+      <div class="col" style="align-items:center;text-align:center;padding:var(--space-4) 0">
+        ${avatar(u, 'xl').replace('avatar-xl"', 'avatar-xl avatar-ring"')}
+        <h2 style="font-family:var(--font-display);font-size:var(--text-xl);font-weight:600;letter-spacing:-0.02em;margin-top:var(--space-4)">${u.name}</h2>
+        <div class="text-muted text-sm mt-1">${u.handle} · ${u.stats.streak}-day streak</div>
+      </div>
+
+      <div class="card col" style="align-items:center;padding:var(--space-6)">
+        <div class="qr-frame">
+          <svg viewBox="0 0 12 12" width="180" height="180" style="color:var(--color-text);shape-rendering:crispEdges">${cells}</svg>
+        </div>
+        <div class="text-xs text-muted mt-4">Scan to view profile</div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><h3>Your link</h3></div>
+        <div class="card row gap-2" style="align-items:center;padding:var(--space-3) var(--space-4)">
+          <div class="icon-tile icon-tile-md" style="background:var(--color-surface-3);color:var(--color-text-muted)">${icon('link')}</div>
+          <div class="flex-1" style="min-width:0;font-family:var(--font-mono,monospace);font-size:var(--text-sm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${url}</div>
+          <button class="btn btn-primary btn-sm" onclick="copyShareLink(this, '${url}')">${icon('copy')}<span>Copy</span></button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><h3>Share to</h3></div>
+        <div class="col gap-2">
+          ${navRow('message-circle', 'Send in message', '', `showToast('Opening messages','message-circle')`)}
+          ${navRow('mail',            'Email',            '', `showToast('Opening mail','mail')`)}
+          ${navRow('globe',           'Copy as text',     '', `copyShareLink(this, '${url}')`)}
+        </div>
+      </div>
+
+      <div class="card text-center mt-4" style="padding:var(--space-5)">
+        <div class="text-xs text-muted">Public profiles show your streak + badges, never your goals.</div>
+      </div>
+    </div>
+  `;
+};

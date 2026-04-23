@@ -3,6 +3,8 @@ const APP = {
   currentScreen: 'landing',
   currentBuddyId: null,
   currentGoalId: null,
+  currentChallengeId: null,
+  currentGroupId: null,
   history: [],
 };
 
@@ -31,6 +33,13 @@ const ROUTES = {
   'settings':           SCREENS.settings,
   'feed':               SCREENS.feed,
   'badges':             SCREENS.badges,
+  'integrations':       SCREENS.integrations,
+  'challenges':         SCREENS.challenges,
+  'challenge-detail':   SCREENS.challengeDetail,
+  'groups':             SCREENS.groups,
+  'group-detail':       SCREENS.groupDetail,
+  'nearby':             SCREENS.nearby,
+  'share-profile':      SCREENS.shareProfile,
 };
 
 // Tabs that should reset history stack
@@ -87,6 +96,52 @@ function openGoal(id) {
 function openEncouragement(id) {
   APP.currentBuddyId = id;
   navigate('encouragement');
+}
+function openChallenge(id) {
+  APP.currentChallengeId = id;
+  navigate('challenge-detail');
+}
+function openGroup(id) {
+  APP.currentGroupId = id;
+  navigate('group-detail');
+}
+function toggleSource(id, btn) {
+  const s = DATA.healthSources.find(x => x.id === id);
+  if (!s) return;
+  s.connected = !s.connected;
+  showToast(s.connected ? `${s.name} connected` : `${s.name} disconnected`, s.connected ? 'check-circle' : 'x');
+  setTimeout(() => navigate('integrations', { force: true }), 300);
+}
+function joinGroup(id) {
+  const g = DATA.groups.find(x => x.id === id);
+  if (!g) return;
+  g.joined = true;
+  showToast('Welcome to ' + g.name, 'check-circle');
+  confetti();
+  setTimeout(() => navigate('group-detail', { force: true }), 600);
+}
+function joinChallenge(id) {
+  const c = DATA.challenges.find(x => x.id === id);
+  if (!c) return;
+  c.joined = true;
+  showToast('Joined ' + c.title.split(' ').slice(0,3).join(' '), 'check-circle');
+  confetti();
+  setTimeout(() => navigate('challenge-detail', { force: true }), 600);
+}
+function acceptDetected(btn) {
+  const card = btn.closest('.card-detected');
+  if (card) card.style.display = 'none';
+  showToast('Logged to your goal', 'check-circle');
+}
+function dismissDetected(btn) {
+  const card = btn.closest('.card-detected');
+  if (card) card.style.display = 'none';
+}
+function copyShareLink(btn, url) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).catch(() => {});
+  }
+  showToast('Link copied', 'copy');
 }
 
 function toggleLike(actId, el) {
