@@ -994,21 +994,36 @@ a:hover { text-decoration: underline; }
   gap: var(--space-2);
 }
 .mood-btn {
-  aspect-ratio: 1;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  display: grid;
-  place-items: center;
-  font-size: 28px;
+  padding: var(--space-3) var(--space-2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--color-text-muted);
   cursor: pointer;
   transition: all var(--transition-fast);
+  font-family: inherit;
 }
-.mood-btn:hover { background: var(--color-surface-2); border-color: var(--color-border-strong); transform: translateY(-2px); }
+.mood-btn svg {
+  width: 24px;
+  height: 24px;
+}
+.mood-btn .mood-label {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.mood-btn:hover { background: var(--color-surface-2); border-color: var(--color-border-strong); color: var(--color-text); transform: translateY(-2px); }
 .mood-btn.selected {
   background: var(--color-primary-dim);
   border-color: var(--color-primary);
-  transform: scale(1.05);
+  color: var(--color-primary);
+  transform: scale(1.04);
 }
 
 .slider-wrap { padding: var(--space-4) 0; }
@@ -1406,22 +1421,57 @@ a:hover { text-decoration: underline; }
 
 /* Groups */
 .card-group { padding: var(--space-4) var(--space-5); }
-.group-emoji {
+.group-icon {
   width: 48px;
   height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
   background: var(--color-surface-3);
+  color: var(--color-text);
   border-radius: var(--radius-md);
   flex-shrink: 0;
+  border: 1px solid var(--color-border);
 }
-.group-emoji-xl {
+.group-icon svg {
+  width: 50%;
+  height: 50%;
+}
+.group-icon-xl {
   width: 80px;
   height: 80px;
-  font-size: 44px;
   border-radius: var(--radius-lg);
+}
+.group-icon-xl svg {
+  width: 44%;
+  height: 44%;
+}
+.group-icon-primary {
+  background: rgba(198, 242, 78, 0.14);
+  color: var(--color-primary);
+  border-color: rgba(198, 242, 78, 0.28);
+}
+.group-icon-warm {
+  background: rgba(255, 154, 86, 0.14);
+  color: #ff9a56;
+  border-color: rgba(255, 154, 86, 0.28);
+}
+.group-icon-cool {
+  background: rgba(122, 162, 247, 0.14);
+  color: #7aa2f7;
+  border-color: rgba(122, 162, 247, 0.28);
+}
+
+.inline-check {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  color: var(--color-primary);
+  vertical-align: -2px;
+}
+.inline-check svg {
+  width: 14px;
+  height: 14px;
 }
 .group-chip {
   flex-shrink: 0;
@@ -1448,7 +1498,7 @@ a:hover { text-decoration: underline; }
 }
 .group-chip:hover { background: var(--color-surface-2); border-color: var(--color-border-strong); }
 .group-chip:active { transform: scale(0.99); }
-.group-chip .group-emoji { width: 40px; height: 40px; font-size: 22px; }
+.group-chip .group-icon { width: 40px; height: 40px; }
 
 .group-meta {
   display: flex;

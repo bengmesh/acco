@@ -221,7 +221,7 @@ SCREENS.dashboard = () => {
         <div class="row gap-3" style="overflow-x:auto;padding-bottom:8px;margin:0 calc(var(--space-5) * -1);padding-left:var(--space-5);padding-right:var(--space-5)">
           ${DATA.groups.filter(g => g.joined).concat(DATA.groups.filter(g => !g.joined).slice(0,2)).map(g => `
             <button class="group-chip clickable" onclick="openGroup('${g.id}')">
-              <div class="group-emoji">${g.emoji}</div>
+              <div class="group-icon group-icon-${g.tint || 'primary'}">${icon(g.icon)}</div>
               <div class="fw-600 text-sm mt-2">${g.name}</div>
               <div class="group-meta mt-1">
                 <span class="group-meta-chip" style="color:var(--color-text-muted)"><span class="group-meta-ico">${icon('users')}</span>${g.memberCount}</span>
@@ -277,11 +277,11 @@ SCREENS.checkin = () => {
     <div class="section" style="margin-top:0">
       <div class="section-title"><h3>How did today go?</h3></div>
       <div class="mood-grid">
-        <button class="mood-btn" onclick="selectMood(this,1)" aria-label="Rough">😓</button>
-        <button class="mood-btn" onclick="selectMood(this,2)" aria-label="Meh">😐</button>
-        <button class="mood-btn selected" onclick="selectMood(this,3)" aria-label="Okay">🙂</button>
-        <button class="mood-btn" onclick="selectMood(this,4)" aria-label="Good">😊</button>
-        <button class="mood-btn" onclick="selectMood(this,5)" aria-label="Crushed it">🔥</button>
+        <button class="mood-btn" onclick="selectMood(this,1)" aria-label="Rough">${icon('frown')}<span class="mood-label">Rough</span></button>
+        <button class="mood-btn" onclick="selectMood(this,2)" aria-label="Meh">${icon('meh')}<span class="mood-label">Meh</span></button>
+        <button class="mood-btn selected" onclick="selectMood(this,3)" aria-label="Okay">${icon('smile')}<span class="mood-label">Okay</span></button>
+        <button class="mood-btn" onclick="selectMood(this,4)" aria-label="Good">${icon('heart')}<span class="mood-label">Good</span></button>
+        <button class="mood-btn" onclick="selectMood(this,5)" aria-label="Crushed it">${icon('flame')}<span class="mood-label">Crushed</span></button>
       </div>
     </div>
 
@@ -407,8 +407,8 @@ SCREENS.createGoal = () => `
 
     <div class="col gap-3">
       ${DATA.goalTemplates.map(t => `
-        <button class="card clickable row gap-3" style="width:100%;text-align:left" onclick="navigate('create-goal-2')">
-          <div style="font-size:28px;flex-shrink:0">${t.emoji}</div>
+        <button class="card clickable row gap-3" style="width:100%;text-align:left;align-items:center" onclick="navigate('create-goal-2')">
+          <div class="icon-tile icon-tile-md" style="background:var(--color-surface-3);color:var(--color-text);border:1px solid var(--color-border)">${icon(t.icon)}</div>
           <div class="flex-1">
             <div class="fw-600 text-sm">${t.label}</div>
             <div class="text-xs text-muted mt-1">${t.desc}</div>
@@ -835,7 +835,7 @@ SCREENS.notifications = () => `
       `).join('')}
     </div>
     <div class="empty-state" style="padding-top:var(--space-8)">
-      <p style="font-size:var(--text-xs)">You're all caught up ✓</p>
+      <p style="font-size:var(--text-xs);display:inline-flex;align-items:center;gap:6px;justify-content:center">You're all caught up <span class="inline-check">${icon('check')}</span></p>
     </div>
   </div>
 `;
@@ -1280,7 +1280,7 @@ function groupCard(g) {
   return `
     <div class="card card-group clickable" onclick="openGroup('${g.id}')">
       <div class="row gap-3" style="align-items:flex-start">
-        <div class="group-emoji">${g.emoji}</div>
+        <div class="group-icon group-icon-${g.tint || 'primary'}">${icon(g.icon)}</div>
         <div class="flex-1" style="min-width:0">
           <div class="fw-600" style="font-size:var(--text-base);line-height:1.3">${g.name}</div>
           <div class="text-xs text-muted mt-1">${g.focus}</div>
@@ -1305,7 +1305,7 @@ SCREENS.groupDetail = () => {
     ${header({ back: 'groups', simple: true, right: `<button class="icon-btn" aria-label="More" onclick="showToast('Invite link copied', 'copy')">${icon('share')}</button>` })}
     <div class="screen-body anim-in">
       <div class="col" style="align-items:center;text-align:center;padding:var(--space-3) 0">
-        <div class="group-emoji group-emoji-xl">${g.emoji}</div>
+        <div class="group-icon group-icon-xl group-icon-${g.tint || 'primary'}">${icon(g.icon)}</div>
         <h2 style="font-family:var(--font-display);font-size:var(--text-xl);font-weight:600;letter-spacing:-0.02em;margin-top:var(--space-3)">${g.name}</h2>
         <div class="text-muted text-sm mt-1">${g.focus} · ${g.city}</div>
         <p class="text-sm text-muted mt-3" style="max-width:34ch">${g.description}</p>

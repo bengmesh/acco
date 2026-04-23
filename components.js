@@ -53,6 +53,14 @@ const ICONS = {
   'globe':        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
   'sparkles':     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.7L19.6 10l-5.7 1.9L12 17l-1.9-5.1L4.4 10l5.7-1.3L12 3z"/><path d="M19 14l.8 2.2 2.2.8-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14z"/></svg>',
   'strava':       '<svg viewBox="0 0 24 24" fill="#fc5200"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>',
+  'dumbbell':     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5l11 11"/><path d="M21 21l-1-1"/><path d="M3 3l1 1"/><path d="M18 22l4-4"/><path d="M2 6l4-4"/><path d="M3 10l7-7"/><path d="M14 21l7-7"/></svg>',
+  'leaf':         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19.2 2.96c1.02 6.67-.34 12.02-4.16 14.52-2.47 1.62-5.5 1.85-8.04.52"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>',
+  'droplet':      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>',
+  'footprints':   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v-2.38c0-.84-.3-1.66-.84-2.3L2.4 10.4C2.14 10.1 2 9.7 2 9.29V7a2 2 0 1 1 4 0v5.14c0 .42.14.83.4 1.15l.2.24c.26.31.4.72.4 1.14V17a2 2 0 1 1-4 0z"/><path d="M16 17v-2.38c0-.84.3-1.66.84-2.3l.76-.92c.26-.3.4-.7.4-1.11V7a2 2 0 1 0-4 0v5.14c0 .42-.14.83-.4 1.15l-.2.24c-.26.31-.4.72-.4 1.14V17a2 2 0 1 0 4 0z"/><path d="M4 21h4"/><path d="M14 21h4"/></svg>',
+  'brain':        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 1 0-5.99.13 3.5 3.5 0 0 0-2.68 4.9 3.5 3.5 0 0 0 .44 6.45 3 3 0 0 0 5.23 2.61A3 3 0 0 0 12 17z"/><path d="M12 5a3 3 0 1 1 5.99.13 3.5 3.5 0 0 1 2.68 4.9 3.5 3.5 0 0 1-.44 6.45 3 3 0 0 1-5.23 2.61A3 3 0 0 1 12 17z"/></svg>',
+  'smile':        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',
+  'meh':          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="15" x2="16" y2="15"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',
+  'frown':        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',
 };
 
 function icon(name) {
@@ -259,7 +267,7 @@ function weekProgress(g) {
   const pips = Array.from({length: target}, (_, i) => `<span class="week-pip ${i < done ? 'filled' : ''}"></span>`).join('');
   const remaining = Math.max(0, target - done);
   const label = done >= target
-    ? 'This week — locked in ✓'
+    ? `This week — locked in <span class="inline-check">${icon('check')}</span>`
     : `This week · ${done} of ${target} · ${remaining} to go`;
   return `
     <div class="week-progress">

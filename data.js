@@ -199,7 +199,8 @@ const DATA = {
     {
       id: 'gr1',
       name: 'Morning Runners Houston',
-      emoji: '🏃',
+      icon: 'activity',
+      tint: 'primary',
       city: 'Houston, TX',
       memberCount: 18,
       groupStreak: 42,
@@ -216,7 +217,8 @@ const DATA = {
     {
       id: 'gr2',
       name: 'Dad Fit Collective',
-      emoji: '💪',
+      icon: 'dumbbell',
+      tint: 'warm',
       city: '— Global',
       memberCount: 126,
       groupStreak: 91,
@@ -232,7 +234,8 @@ const DATA = {
     {
       id: 'gr3',
       name: 'Calm Squad',
-      emoji: '🧘',
+      icon: 'brain',
+      tint: 'cool',
       city: '— Global',
       memberCount: 67,
       groupStreak: 128,
@@ -261,14 +264,14 @@ const DATA = {
   ],
 
   goalTemplates: [
-    { emoji: '🏃', label: 'Run regularly',        desc: '3x per week' },
-    { emoji: '🧘', label: 'Daily meditation',     desc: '10 minutes' },
-    { emoji: '💪', label: 'Strength training',    desc: '4x per week' },
-    { emoji: '🥗', label: 'Clean eating',         desc: 'No processed food' },
-    { emoji: '💧', label: 'Hydration goal',       desc: '8 cups / day' },
-    { emoji: '😴', label: 'Sleep 8 hours',        desc: 'By 10:30pm' },
-    { emoji: '🚶', label: '10k steps daily',      desc: 'Every day' },
-    { emoji: '📝', label: 'Custom goal',          desc: 'Design your own' },
+    { icon: 'activity',   label: 'Run regularly',      desc: '3x per week' },
+    { icon: 'brain',      label: 'Daily meditation',   desc: '10 minutes' },
+    { icon: 'dumbbell',   label: 'Strength training',  desc: '4x per week' },
+    { icon: 'leaf',       label: 'Clean eating',       desc: 'No processed food' },
+    { icon: 'droplet',    label: 'Hydration goal',     desc: '8 cups / day' },
+    { icon: 'moon',       label: 'Sleep 8 hours',      desc: 'By 10:30pm' },
+    { icon: 'footprints', label: '10k steps daily',    desc: 'Every day' },
+    { icon: 'edit',       label: 'Custom goal',        desc: 'Design your own' },
   ],
 };
 
