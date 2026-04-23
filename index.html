@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<meta name="theme-color" content="#0B0B14" />
+<title>acco — Accountability Fitness</title>
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='12' fill='none' stroke='%23C6F24E' stroke-width='4'/></svg>" />
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=clash-display@500,600,700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Desktop device frame (hidden on mobile) -->
+  <div class="device-frame" id="deviceFrame">
+    <div class="device-notch" aria-hidden="true"></div>
+    <div class="device-screen" id="deviceScreen">
+      <div id="app" class="app"></div>
+    </div>
+  </div>
+
+  <!-- Mobile full-screen wrapper -->
+  <noscript><p style="padding:2rem;color:#fff">Please enable JavaScript to use this prototype.</p></noscript>
+
+  <!-- Toast container -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="data.js"></script>
+  <script src="components.js"></script>
+  <script src="screens.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
