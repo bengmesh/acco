@@ -255,6 +255,8 @@ const DATA = {
     },
     {
       id: 'gr4',
+      coachName: 'Coach Leila Park',
+      coachLed: true,
       name: 'Sub-3 Marathon Club',
       icon: 'footprints',
       tint: 'warm',
@@ -297,6 +299,85 @@ const DATA = {
     { icon: 'moon',       label: 'Sleep 8 hours',      desc: 'By 10:30pm' },
     { icon: 'footprints', label: '10k steps daily',    desc: 'Every day' },
     { icon: 'edit',       label: 'Custom goal',        desc: 'Design your own' },
+  ],
+
+  // ===== Plans catalog =====
+  plans: [
+    {
+      id: 'free',
+      name: 'Free',
+      tagline: 'Get consistent with friends',
+      priceMonthly: 0,
+      priceYearly: 0,
+      icon: 'heart',
+      tint: 'muted',
+      features: [
+        { ok: true,  text: 'Up to 5 active goals' },
+        { ok: true,  text: 'Up to 10 accountability buddies' },
+        { ok: true,  text: 'Daily check-ins + streaks' },
+        { ok: true,  text: 'Join public groups' },
+        { ok: false, text: 'Private groups & invite links' },
+        { ok: false, text: 'Advanced insights' },
+      ],
+    },
+    {
+      id: 'pro',
+      name: 'Pro',
+      tagline: 'Unlock the full experience',
+      priceMonthly: 8,
+      priceYearly: 72,
+      icon: 'sparkles',
+      tint: 'primary',
+      popular: true,
+      features: [
+        { ok: true, text: 'Unlimited goals & buddies' },
+        { ok: true, text: 'Create private groups' },
+        { ok: true, text: 'Advanced insights & trends' },
+        { ok: true, text: 'Priority support' },
+        { ok: true, text: 'Early access to new features' },
+      ],
+    },
+    {
+      id: 'trainer',
+      name: 'Trainer',
+      tagline: 'Coach clients and teams',
+      priceMonthly: 24,
+      priceYearly: 216,
+      icon: 'award',
+      tint: 'warm',
+      features: [
+        { ok: true, text: 'Everything in Pro' },
+        { ok: true, text: 'Up to 50 trainees' },
+        { ok: true, text: 'Assign goals & check-in cadence' },
+        { ok: true, text: 'Coach-led groups with your branding' },
+        { ok: true, text: 'Trainee progress dashboard' },
+        { ok: true, text: 'Bulk messaging & nudges' },
+      ],
+    },
+  ],
+
+  // Current plan state (user can upgrade/downgrade in-app)
+  subscription: {
+    planId: 'free',        // 'free' | 'pro' | 'trainer'
+    billingCycle: 'yearly', // 'monthly' | 'yearly' — preview only while on Free
+    renewsOn: null,         // ISO-ish date when paid plan renews
+    since: 'March 2025',
+  },
+
+  // ===== Trainer roster (used when user is on Trainer plan) =====
+  trainees: [
+    { id: 't1', name: 'Alex Romano',    handle: '@alexr',     color: 2, focus: 'Half-marathon · Oct',      streak: 14, lastCheckIn: '2h ago',       status: 'on-track',   weekProgress: { done: 2, target: 3 } },
+    { id: 't2', name: 'Priya Desai',    handle: '@priyad',    color: 4, focus: 'Strength 4x/wk',           streak: 9,  lastCheckIn: 'Yesterday',    status: 'on-track',   weekProgress: { done: 3, target: 4 } },
+    { id: 't3', name: 'Marco Lopez',    handle: '@marcol',    color: 5, focus: 'Lose 20 lbs · 16wk',       streak: 0,  lastCheckIn: '3 days ago',   status: 'needs-nudge', weekProgress: { done: 0, target: 5 } },
+    { id: 't4', name: 'Kim Anderson',   handle: '@kima',      color: 6, focus: 'Yoga daily',               streak: 41, lastCheckIn: '25m ago',      status: 'crushing',   weekProgress: { done: 7, target: 7 } },
+    { id: 't5', name: 'Jordan Hughes',  handle: '@jhughes',   color: 7, focus: 'Sub-25 5k · 8wk',          streak: 6,  lastCheckIn: 'This morning', status: 'on-track',   weekProgress: { done: 2, target: 3 } },
+  ],
+
+  // Goals a trainer has assigned. Prototype-only.
+  trainerGoals: [
+    { id: 'tg1', title: 'Run 3x per week',   cadence: 'weekly', target: 3, assignedTo: ['t1','t5'],      created: '2 weeks ago' },
+    { id: 'tg2', title: 'Strength 4x/week',  cadence: 'weekly', target: 4, assignedTo: ['t2'],            created: '3 weeks ago' },
+    { id: 'tg3', title: 'Daily yoga flow',   cadence: 'daily',  target: 1, assignedTo: ['t4'],            created: '6 weeks ago' },
   ],
 };
 

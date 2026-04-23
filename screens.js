@@ -957,6 +957,19 @@ SCREENS.profile = () => {
         </div>
       </div>
 
+      ${DATA.subscription.planId === 'trainer' ? `
+      <div class="card mt-4" style="padding:var(--space-4);background:linear-gradient(135deg,rgba(255,154,86,0.10),rgba(255,154,86,0.02));border-color:rgba(255,154,86,0.28);cursor:pointer" onclick="navigate('trainerDashboard')">
+        <div class="row gap-3" style="align-items:center">
+          <div class="icon-tile icon-tile-lg group-icon-warm" style="border-radius:var(--radius-md)">${icon('award')}</div>
+          <div class="flex-1" style="min-width:0">
+            <div class="fw-600">Trainer dashboard</div>
+            <div class="text-xs text-muted mt-1">${DATA.trainees.length} trainees · ${DATA.trainerGoals.length} active goals</div>
+          </div>
+          <span style="width:18px;height:18px;display:inline-flex;flex-shrink:0;align-items:center;justify-content:center;color:var(--text-muted)">${icon('chevron-right')}</span>
+        </div>
+      </div>
+      ` : ''}
+
       <div class="section">
         <div class="section-title"><h3>Badges</h3><a href="#" onclick="navigate('badges');return false">See all</a></div>
         <div class="row gap-3" style="overflow-x:auto;padding-bottom:8px">
@@ -1010,6 +1023,7 @@ SCREENS.settings = () => `
       ${navRow('mail', 'Email', DATA.user.email || 'ben@meshcreative.co', "navigate('accountEmail')")}
       ${navRow('lock', 'Password', '', "navigate('accountPassword')")}
       ${navRow('shield', 'Privacy', '', "navigate('accountPrivacy')")}
+      ${navRow('sparkles', 'Plan', (DATA.plans.find(p => p.id === DATA.subscription.planId) || {}).name || 'Free', "navigate('plans')")}
     </div>
 
     <div class="section-title"><h3>App</h3></div>
@@ -1341,8 +1355,11 @@ function groupCard(g) {
       <div class="row gap-3" style="align-items:flex-start">
         <div class="group-icon group-icon-${g.tint || 'primary'}">${icon(g.icon)}</div>
         <div class="flex-1" style="min-width:0">
-          <div class="fw-600" style="font-size:var(--text-base);line-height:1.3">${g.name}</div>
-          <div class="text-xs text-muted mt-1">${g.focus}</div>
+          <div class="row gap-2" style="align-items:center">
+            <div class="fw-600" style="font-size:var(--text-base);line-height:1.3">${g.name}</div>
+            ${g.coachLed ? `<span class="coach-badge">${icon('award')}<span>Coach-led</span></span>` : ''}
+          </div>
+          <div class="text-xs text-muted mt-1">${g.focus}${g.coachName ? ' · with ' + g.coachName : ''}</div>
           <div class="group-meta mt-2">
             ${privacyChip(g)}
             <span class="group-meta-chip" style="color:var(--color-text-muted)"><span class="group-meta-ico">${icon('users')}</span><span>${g.memberCount}</span></span>
@@ -1370,7 +1387,9 @@ SCREENS.groupDetail = () => {
         <div class="row gap-2 mt-2" style="justify-content:center;flex-wrap:wrap">
           ${privacyChip(g)}
           <span class="group-meta-chip" style="color:var(--color-text-muted)"><span class="group-meta-ico">${icon('map-pin')}</span><span>${g.city.replace(/^—\s*/, '')}</span></span>
+          ${g.coachLed ? `<span class="coach-badge">${icon('award')}<span>Coach-led</span></span>` : ''}
         </div>
+        ${g.coachName ? `<div class="text-xs mt-2" style="color:#ff9a56">With ${g.coachName}</div>` : ''}
         <div class="text-muted text-sm mt-2">${g.focus}</div>
         <p class="text-sm text-muted mt-3" style="max-width:34ch">${g.description}</p>
         ${g.privacy === 'private' && !g.joined ? `
@@ -1898,5 +1917,361 @@ SCREENS.contactSupport = () => `
       </div>
     </div>
     <button class="btn btn-primary btn-block mt-4" onclick="sendSupportMessage()">Send message</button>
+  </div>
+`;
+
+// ==================== PLANS ====================
+// Rank used to know if a switch is an upgrade, downgrade, or current
+const PLAN_RANK = { free: 0, pro: 1, trainer: 2 };
+
+function planPriceLine(plan, cycle) {
+  if (plan.id === 'free') return `<span class="plan-price">Free<span class="unit">forever</span></span>`;
+  if (cycle === 'yearly') {
+    const perMo = (plan.priceYearly / 12).toFixed(0);
+    return `<span class="plan-price">$${perMo}<span class="unit">/ month, billed yearly</span></span>`;
+  }
+  return `<span class="plan-price">$${plan.priceMonthly}<span class="unit">/ month</span></span>`;
+}
+
+function featureRowHTML(f) {
+  return `<div class="feature-row ${f.ok ? 'ok' : 'no'}"><span class="feature-ico">${icon(f.ok ? 'check' : 'x')}</span><span>${f.text}</span></div>`;
+}
+
+SCREENS.plans = () => {
+  const sub = DATA.subscription;
+  const cycle = sub.billingCycle || 'yearly';
+  const currentRank = PLAN_RANK[sub.planId];
+  const currentPlan = DATA.plans.find(p => p.id === sub.planId);
+  return `
+    ${statusBar()}
+    ${header({ title: 'Plans', back: 'settings' })}
+    <div class="screen-body anim-in">
+      <div class="card plan-current mb-6" style="padding:var(--space-5)">
+        <div class="row gap-3" style="align-items:center">
+          <div class="icon-tile icon-tile-lg icon-tile-primary">${icon(currentPlan.icon)}</div>
+          <div class="flex-1" style="min-width:0">
+            <div class="text-xs text-muted" style="letter-spacing:0.08em;text-transform:uppercase">Current plan</div>
+            <div class="fw-600" style="font-size:var(--text-lg)">${currentPlan.name}</div>
+            <div class="text-xs text-muted mt-1">${sub.planId === 'free' ? 'Since ' + sub.since : 'Renews ' + (sub.renewsOn || 'monthly')}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title"><h3>Billing</h3></div>
+      <div class="segmented mb-6" style="--cols:2" id="planCycleSeg">
+        <button class="${cycle === 'monthly' ? 'active' : ''}" data-val="monthly" onclick="selectBillingCycle(this,'monthly')">Monthly</button>
+        <button class="${cycle === 'yearly' ? 'active' : ''}" data-val="yearly" onclick="selectBillingCycle(this,'yearly')">Yearly<span style="margin-left:6px;font-size:10px;padding:2px 6px;background:rgba(198,242,78,0.18);color:var(--color-primary);border-radius:999px;font-weight:700">Save 25%</span></button>
+      </div>
+
+      <div class="section-title"><h3>All plans</h3></div>
+      <div class="col gap-4" id="planList">
+        ${DATA.plans.map(p => planCardHTML(p, cycle, currentRank, sub.planId)).join('')}
+      </div>
+
+      <div class="card text-center mt-6" style="padding:var(--space-5)">
+        <div class="text-xs text-muted">Prototype · no real charges. Payment step is mocked.</div>
+      </div>
+    </div>
+  `;
+};
+
+function planCardHTML(plan, cycle, currentRank, currentId) {
+  const isCurrent = plan.id === currentId;
+  const myRank = PLAN_RANK[plan.id];
+  let btn;
+  if (isCurrent) {
+    btn = `<button class="btn btn-secondary btn-block" disabled style="opacity:0.7;cursor:default">${icon('check-circle')}<span>Current plan</span></button>`;
+  } else if (myRank > currentRank) {
+    btn = `<button class="btn btn-primary btn-block" onclick="startUpgrade('${plan.id}')">${icon('arrow-right')}<span>Upgrade to ${plan.name}</span></button>`;
+  } else {
+    btn = `<button class="btn btn-secondary btn-block" onclick="startDowngrade('${plan.id}')"><span>Switch to ${plan.name}</span></button>`;
+  }
+  return `
+    <div class="plan-card ${isCurrent ? 'plan-current' : ''} ${plan.popular && !isCurrent ? 'plan-popular' : ''}">
+      ${plan.popular && !isCurrent ? `<div class="plan-ribbon">Most popular</div>` : ''}
+      <div class="row gap-3" style="align-items:flex-start">
+        <div class="icon-tile icon-tile-lg group-icon-${plan.tint === 'primary' ? 'primary' : plan.tint === 'warm' ? 'warm' : 'muted'}" style="border-radius:var(--radius-md)">${icon(plan.icon)}</div>
+        <div class="flex-1" style="min-width:0">
+          <div class="fw-600" style="font-size:var(--text-lg)">${plan.name}</div>
+          <div class="text-xs text-muted mt-1">${plan.tagline}</div>
+        </div>
+      </div>
+      <div class="mt-4 mb-4">${planPriceLine(plan, cycle)}</div>
+      <div class="col gap-0 mb-4">${plan.features.map(featureRowHTML).join('')}</div>
+      ${btn}
+    </div>
+  `;
+}
+
+// ==================== PLAN CHECKOUT (upgrade confirm) ====================
+SCREENS.planCheckout = () => {
+  const plan = DATA.plans.find(p => p.id === APP.pendingPlanId) || DATA.plans[1];
+  const cycle = APP.pendingCycle || DATA.subscription.billingCycle || 'yearly';
+  const price = cycle === 'yearly' ? plan.priceYearly : plan.priceMonthly;
+  const unit = cycle === 'yearly' ? 'year' : 'month';
+  const savings = cycle === 'yearly' ? (plan.priceMonthly * 12 - plan.priceYearly) : 0;
+  return `
+    ${statusBar()}
+    ${header({ title: 'Confirm upgrade', back: 'plans' })}
+    <div class="screen-body anim-in">
+      <div class="card" style="padding:var(--space-5);text-align:center">
+        <div class="icon-tile icon-tile-xl icon-tile-primary" style="margin:0 auto var(--space-4)">${icon(plan.icon)}</div>
+        <div class="text-xs text-muted" style="letter-spacing:0.08em;text-transform:uppercase">Upgrading to</div>
+        <h2 style="font-family:var(--font-display);font-size:var(--text-2xl);font-weight:600;letter-spacing:-0.02em;margin-top:var(--space-2)">${plan.name}</h2>
+        <div class="text-sm text-muted mt-1">${plan.tagline}</div>
+      </div>
+
+      <div class="section-title mt-6"><h3>What you get</h3></div>
+      <div class="card" style="padding:var(--space-4) var(--space-5)">
+        ${plan.features.filter(f => f.ok).map(featureRowHTML).join('')}
+      </div>
+
+      <div class="section-title mt-6"><h3>Summary</h3></div>
+      <div class="card" style="padding:var(--space-4) var(--space-5)">
+        <div class="row gap-3" style="justify-content:space-between;padding:6px 0">
+          <span class="text-sm text-muted">${plan.name} · ${cycle === 'yearly' ? 'Yearly' : 'Monthly'}</span>
+          <span class="text-sm fw-600">$${price} / ${unit}</span>
+        </div>
+        ${savings > 0 ? `<div class="row gap-3" style="justify-content:space-between;padding:6px 0">
+          <span class="text-sm" style="color:var(--color-primary)">Yearly savings</span>
+          <span class="text-sm fw-600" style="color:var(--color-primary)">-$${savings}</span>
+        </div>` : ''}
+        <div style="height:1px;background:var(--color-border);margin:8px 0"></div>
+        <div class="row gap-3" style="justify-content:space-between;padding:6px 0">
+          <span class="fw-600">Total today</span>
+          <span class="fw-600">$${price}</span>
+        </div>
+      </div>
+
+      <div class="card mt-4" style="padding:var(--space-4) var(--space-5)">
+        <div class="row gap-3" style="align-items:center">
+          <div class="icon-tile icon-tile-muted" style="width:36px;height:36px;border-radius:var(--radius-md)">${icon('lock')}</div>
+          <div class="flex-1" style="min-width:0">
+            <div class="text-sm fw-600">Payment · Apple Pay</div>
+            <div class="text-xs text-muted">Mocked for prototype</div>
+          </div>
+          <button class="text-xs" style="color:var(--color-primary);background:none;border:none;cursor:pointer">Change</button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block mt-6" onclick="completeUpgrade()">${icon('check')}<span>Confirm and upgrade</span></button>
+      <button class="btn btn-ghost btn-block mt-2" onclick="navigate('plans')">Cancel</button>
+    </div>
+  `;
+};
+
+// ==================== DOWNGRADE CONFIRM ====================
+SCREENS.planDowngrade = () => {
+  const plan = DATA.plans.find(p => p.id === APP.pendingPlanId) || DATA.plans[0];
+  const currentPlan = DATA.plans.find(p => p.id === DATA.subscription.planId);
+  // Features user loses = features currently available but missing from target plan
+  const targetOK = new Set(plan.features.filter(f => f.ok).map(f => f.text));
+  // Exclude umbrella "Everything in X" lines — those don't represent losable features.
+  const losing = currentPlan.features.filter(f => f.ok && !targetOK.has(f.text) && !/^Everything in /i.test(f.text));
+  return `
+    ${statusBar()}
+    ${header({ title: 'Switch plan', back: 'plans' })}
+    <div class="screen-body anim-in">
+      <div class="card" style="padding:var(--space-5);text-align:center">
+        <div class="icon-tile icon-tile-xl icon-tile-muted" style="margin:0 auto var(--space-4)">${icon(plan.icon)}</div>
+        <div class="text-xs text-muted" style="letter-spacing:0.08em;text-transform:uppercase">Switching to</div>
+        <h2 style="font-family:var(--font-display);font-size:var(--text-2xl);font-weight:600;letter-spacing:-0.02em;margin-top:var(--space-2)">${plan.name}</h2>
+        <div class="text-sm text-muted mt-1">${plan.tagline}</div>
+      </div>
+
+      ${losing.length ? `
+      <div class="section-title mt-6"><h3>You'll lose access to</h3></div>
+      <div class="card" style="padding:var(--space-4) var(--space-5)">
+        ${losing.map(f => `<div class="feature-row no"><span class="feature-ico">${icon('x')}</span><span>${f.text}</span></div>`).join('')}
+      </div>
+      ` : ''}
+
+      <div class="card mt-4" style="padding:var(--space-4) var(--space-5);border-color:rgba(255,154,86,0.3);background:rgba(255,154,86,0.04)">
+        <div class="row gap-3" style="align-items:flex-start">
+          <div style="width:20px;height:20px;flex-shrink:0;color:#ff9a56;margin-top:2px">${icon('clock')}</div>
+          <div class="text-sm">Your current plan stays active until the end of your billing period. The switch takes effect then.</div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block mt-6" onclick="completeDowngrade()">${icon('check')}<span>Switch to ${plan.name}</span></button>
+      <button class="btn btn-ghost btn-block mt-2" onclick="navigate('plans')">Keep ${currentPlan.name}</button>
+    </div>
+  `;
+};
+
+// ==================== TRAINER DASHBOARD ====================
+function traineeStatusLabel(s) {
+  return { 'crushing': 'Crushing it', 'on-track': 'On track', 'needs-nudge': 'Needs a nudge' }[s] || s;
+}
+function traineeCardHTML(t) {
+  const pct = t.weekProgress ? Math.round(100 * t.weekProgress.done / t.weekProgress.target) : 0;
+  return `
+    <div class="trainee-card" onclick="openTrainee('${t.id}')" style="cursor:pointer">
+      <div class="row gap-3" style="align-items:center">
+        ${avatar(t)}
+        <div class="flex-1" style="min-width:0">
+          <div class="row gap-2" style="align-items:center">
+            <div class="fw-600 text-sm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}</div>
+            <span class="status-dot ${t.status}"></span>
+          </div>
+          <div class="text-xs text-muted mt-1" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.focus}</div>
+        </div>
+        <div class="text-right" style="flex-shrink:0">
+          <div class="text-xs" style="color:${t.streak > 0 ? 'var(--color-primary)' : 'var(--color-text-faint)'};font-weight:600">${t.streak}d streak</div>
+          <div class="text-xs text-muted mt-1">${t.lastCheckIn}</div>
+        </div>
+      </div>
+      <div class="row gap-3 mt-3" style="align-items:center">
+        <div class="progress flex-1"><div class="progress-bar" style="width:${pct}%"></div></div>
+        <span class="text-xs text-muted" style="flex-shrink:0">${t.weekProgress.done}/${t.weekProgress.target} this wk</span>
+      </div>
+    </div>
+  `;
+}
+
+SCREENS.trainerDashboard = () => {
+  const trainees = DATA.trainees;
+  const needsNudge = trainees.filter(t => t.status === 'needs-nudge');
+  const crushing = trainees.filter(t => t.status === 'crushing');
+  const onTrack = trainees.filter(t => t.status === 'on-track');
+  return `
+    ${statusBar()}
+    ${header({
+      title: 'Trainer',
+      subtitle: `${trainees.length} trainees`,
+      back: 'profile',
+      right: `<button class="icon-btn" onclick="navigate('addTrainee')" aria-label="Add trainee">${icon('user-plus')}</button>`
+    })}
+    <div class="screen-body anim-in">
+      <div class="stat-row">
+        <div class="stat">
+          <div class="stat-num"><span class="accent">${crushing.length}</span></div>
+          <div class="stat-lbl">Crushing it</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">${onTrack.length}</div>
+          <div class="stat-lbl">On track</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" style="color:#ff9a56">${needsNudge.length}</div>
+          <div class="stat-lbl">Needs nudge</div>
+        </div>
+      </div>
+
+      <div class="row gap-2 mb-4 mt-4">
+        <button class="btn btn-primary btn-sm flex-1" onclick="navigate('assignGoal')">${icon('target')}<span>Assign goal</span></button>
+        <button class="btn btn-secondary btn-sm flex-1" onclick="showToast('Nudge sent to ' + ${needsNudge.length} + ' trainee' + (${needsNudge.length} === 1 ? '' : 's'), 'send')">${icon('send')}<span>Nudge all</span></button>
+      </div>
+
+      ${needsNudge.length ? `
+      <div class="section-title"><h3>Needs a nudge</h3><span class="text-xs text-muted">${needsNudge.length}</span></div>
+      <div class="col gap-3 mb-6">${needsNudge.map(traineeCardHTML).join('')}</div>
+      ` : ''}
+
+      <div class="section-title"><h3>All trainees</h3><a href="#" onclick="navigate('addTrainee');return false">+ Add</a></div>
+      <div class="col gap-3 mb-6">${trainees.map(traineeCardHTML).join('')}</div>
+
+      <div class="section-title"><h3>Active assignments</h3></div>
+      <div class="col gap-3">
+        ${DATA.trainerGoals.map(g => `
+          <div class="card" style="padding:var(--space-4)">
+            <div class="row gap-3" style="align-items:center">
+              <div class="icon-tile icon-tile-lg icon-tile-primary-dim" style="border-radius:var(--radius-md)">${icon('target')}</div>
+              <div class="flex-1" style="min-width:0">
+                <div class="fw-600 text-sm">${g.title}</div>
+                <div class="text-xs text-muted mt-1">${g.cadence === 'daily' ? 'Daily' : g.target + 'x per week'} · ${g.assignedTo.length} trainee${g.assignedTo.length === 1 ? '' : 's'} · Created ${g.created}</div>
+              </div>
+              <span style="width:18px;height:18px;display:inline-flex;flex-shrink:0;align-items:center;justify-content:center;color:var(--text-muted)">${icon('chevron-right')}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+};
+
+// ==================== ADD TRAINEE ====================
+SCREENS.addTrainee = () => `
+  ${statusBar()}
+  ${header({ title: 'Add trainee', back: 'trainerDashboard' })}
+  <div class="screen-body anim-in">
+    <p class="text-sm text-muted mb-6">Invite a client by email or share a personal join code they can redeem.</p>
+
+    <div class="field">
+      <label class="field-label">Email</label>
+      <input id="newTraineeEmail" class="input" type="email" placeholder="client@example.com" />
+    </div>
+    <div class="field">
+      <label class="field-label">Name (optional)</label>
+      <input id="newTraineeName" class="input" placeholder="Alex Romano" />
+    </div>
+    <div class="field">
+      <label class="field-label">Focus (what they're working on)</label>
+      <input id="newTraineeFocus" class="input" placeholder="Half-marathon · Oct" />
+    </div>
+
+    <button class="btn btn-primary btn-block mt-4" onclick="completeAddTrainee()">${icon('send')}<span>Send invite</span></button>
+
+    <div class="section-title mt-6"><h3>Or share your trainer code</h3></div>
+    <div class="card text-center" style="padding:var(--space-5)">
+      <div class="text-xs text-muted" style="letter-spacing:0.08em;text-transform:uppercase">Your code</div>
+      <div class="fw-600 mt-2" style="font-family:var(--font-display);font-size:var(--text-2xl);letter-spacing:0.1em">BEN-ACCO-24</div>
+      <button class="btn btn-secondary btn-sm mt-4" onclick="showToast('Code copied','copy')">${icon('copy')}<span>Copy code</span></button>
+    </div>
+
+    <button class="btn btn-ghost btn-block mt-4" onclick="navigate('trainerDashboard')">Cancel</button>
+  </div>
+`;
+
+// ==================== ASSIGN GOAL (trainer) ====================
+SCREENS.assignGoal = () => `
+  ${statusBar()}
+  ${header({ title: 'Assign a goal', back: 'trainerDashboard' })}
+  <div class="screen-body anim-in">
+    <p class="text-sm text-muted mb-6">Set a shared goal for one or more trainees. They'll be notified and can start checking in today.</p>
+
+    <div class="field">
+      <label class="field-label">Goal title</label>
+      <input id="assignTitle" class="input" placeholder="Run 3x per week" />
+    </div>
+    <div class="field">
+      <label class="field-label">Description</label>
+      <textarea id="assignDesc" class="textarea" placeholder="What does success look like?"></textarea>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Cadence</label>
+      <div class="segmented" style="--cols:2" id="assignCadenceSeg">
+        <button class="active" data-val="daily" onclick="selectAssignCadence(this,'daily')">Daily</button>
+        <button data-val="weekly" onclick="selectAssignCadence(this,'weekly')">Per week</button>
+      </div>
+    </div>
+
+    <div class="field" id="assignTargetWrap" style="display:none">
+      <label class="field-label">Target per week</label>
+      <div class="segmented" style="--cols:5" id="assignTargetSeg">
+        ${[1,2,3,4,5].map(n => `<button ${n===3?'class="active"':''} data-val="${n}" onclick="selectAssignTarget(this,${n})">${n}x</button>`).join('')}
+      </div>
+    </div>
+
+    <div class="section-title mt-2"><h3>Assign to</h3><span class="text-xs text-muted" id="assignCountLbl">0 selected</span></div>
+    <div class="col gap-2 mb-4">
+      <div class="row gap-2" style="padding:6px 0;align-items:center">
+        <button class="chip" onclick="toggleAllTrainees(this)" id="assignAllBtn">Select all</button>
+      </div>
+      ${DATA.trainees.map(t => `
+        <label class="card row gap-3" style="align-items:center;padding:var(--space-3) var(--space-4);cursor:pointer">
+          <input type="checkbox" class="assign-trainee-chk" data-id="${t.id}" onchange="updateAssignCount()" style="width:18px;height:18px;accent-color:var(--color-primary);flex-shrink:0"/>
+          ${avatar(t)}
+          <div class="flex-1" style="min-width:0">
+            <div class="fw-600 text-sm">${t.name}</div>
+            <div class="text-xs text-muted mt-1">${t.focus}</div>
+          </div>
+        </label>
+      `).join('')}
+    </div>
+
+    <button class="btn btn-primary btn-block mt-4" onclick="completeAssignGoal()">${icon('check')}<span>Assign goal</span></button>
+    <button class="btn btn-ghost btn-block mt-2" onclick="navigate('trainerDashboard')">Cancel</button>
   </div>
 `;

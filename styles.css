@@ -1612,3 +1612,105 @@ a:hover { text-decoration: underline; }
   justify-content: center;
 }
 .qr-frame svg { color: var(--color-text); }
+
+/* ==================== PLANS ==================== */
+.plan-card {
+  position: relative;
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  transition: border-color var(--transition-fast);
+}
+.plan-card.plan-current {
+  border-color: rgba(198, 242, 78, 0.35);
+  background: linear-gradient(180deg, rgba(198,242,78,0.06), rgba(198,242,78,0.01));
+}
+.plan-card.plan-popular {
+  border-color: rgba(198, 242, 78, 0.4);
+}
+.plan-ribbon {
+  position: absolute;
+  top: -10px;
+  right: 16px;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+.plan-price {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.plan-price .unit {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  font-weight: 500;
+  margin-left: 4px;
+  letter-spacing: 0;
+}
+.feature-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: var(--text-sm);
+}
+.feature-row .feature-ico {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  margin-top: 1px;
+}
+.feature-row.ok .feature-ico { background: rgba(198, 242, 78, 0.16); color: var(--color-primary); }
+.feature-row.no .feature-ico { background: var(--color-surface-3); color: var(--color-text-faint); }
+.feature-row.ok .feature-ico svg { width: 11px; height: 11px; }
+.feature-row.no .feature-ico svg { width: 10px; height: 10px; }
+.feature-row.no { color: var(--color-text-muted); }
+
+/* Trainee cards */
+.trainee-card {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.status-dot.crushing { background: var(--color-primary); box-shadow: 0 0 0 3px rgba(198,242,78,0.22); }
+.status-dot.on-track { background: var(--color-primary); }
+.status-dot.needs-nudge { background: #ff9a56; box-shadow: 0 0 0 3px rgba(255,154,86,0.22); }
+.status-label.crushing { color: var(--color-primary); }
+.status-label.on-track { color: var(--color-text-muted); }
+.status-label.needs-nudge { color: #ff9a56; }
+
+/* Coach-led group badge */
+.coach-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 154, 86, 0.14);
+  color: #ff9a56;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 154, 86, 0.24);
+}
+.coach-badge svg { width: 11px; height: 11px; }

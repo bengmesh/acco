@@ -49,6 +49,12 @@ const ROUTES = {
   'goalPreferences':    SCREENS.goalPreferences,
   'helpCenter':         SCREENS.helpCenter,
   'contactSupport':     SCREENS.contactSupport,
+  'plans':              SCREENS.plans,
+  'planCheckout':       SCREENS.planCheckout,
+  'planDowngrade':      SCREENS.planDowngrade,
+  'trainerDashboard':   SCREENS.trainerDashboard,
+  'addTrainee':         SCREENS.addTrainee,
+  'assignGoal':         SCREENS.assignGoal,
 };
 
 // Tabs that should reset history stack
@@ -418,4 +424,129 @@ function confirmDeleteAccount() {
   if (!ok) return;
   showToast('Account deletion queued', 'x');
   setTimeout(() => navigate('landing', { force: true }), 700);
+}
+
+// ============= PLAN HANDLERS =============
+function selectBillingCycle(btn, val) {
+  const seg = document.getElementById('planCycleSeg');
+  if (seg) seg.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  DATA.subscription.billingCycle = val;
+  // Re-render just the plan list to reflect pricing
+  const list = document.getElementById('planList');
+  if (list) {
+    const currentRank = PLAN_RANK[DATA.subscription.planId];
+    list.innerHTML = DATA.plans.map(p => planCardHTML(p, val, currentRank, DATA.subscription.planId)).join('');
+  }
+}
+function startUpgrade(planId) {
+  APP.pendingPlanId = planId;
+  APP.pendingCycle = DATA.subscription.billingCycle || 'yearly';
+  navigate('planCheckout');
+}
+function startDowngrade(planId) {
+  APP.pendingPlanId = planId;
+  navigate('planDowngrade');
+}
+function completeUpgrade() {
+  const planId = APP.pendingPlanId;
+  const plan = DATA.plans.find(p => p.id === planId);
+  if (!plan) return;
+  DATA.subscription.planId = planId;
+  DATA.subscription.billingCycle = APP.pendingCycle || 'yearly';
+  // Set renews date = today + 1 month or + 1 year
+  const d = new Date();
+  if (DATA.subscription.billingCycle === 'yearly') d.setFullYear(d.getFullYear() + 1);
+  else d.setMonth(d.getMonth() + 1);
+  DATA.subscription.renewsOn = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  showToast(`You're on ${plan.name}`, 'check-circle');
+  confetti();
+  setTimeout(() => navigate('plans', { force: true }), 700);
+}
+function completeDowngrade() {
+  const planId = APP.pendingPlanId;
+  const plan = DATA.plans.find(p => p.id === planId);
+  if (!plan) return;
+  DATA.subscription.planId = planId;
+  if (planId === 'free') {
+    DATA.subscription.renewsOn = null;
+  }
+  showToast(`Switched to ${plan.name}`, 'check-circle');
+  setTimeout(() => navigate('plans', { force: true }), 500);
+}
+
+// ============= TRAINER HANDLERS =============
+function openTrainee(id) {
+  const t = DATA.trainees.find(x => x.id === id);
+  if (t) showToast(`Opening ${t.name} · coming soon`, 'user');
+}
+function completeAddTrainee() {
+  const emailEl = document.getElementById('newTraineeEmail');
+  const nameEl = document.getElementById('newTraineeName');
+  const focusEl = document.getElementById('newTraineeFocus');
+  const email = (emailEl && emailEl.value.trim()) || '';
+  const name = (nameEl && nameEl.value.trim()) || (email ? email.split('@')[0] : 'New trainee');
+  const focus = (focusEl && focusEl.value.trim()) || 'Getting started';
+  if (!email) {
+    showToast('Add an email address', 'x');
+    return;
+  }
+  const id = 't' + (DATA.trainees.length + 1) + Date.now().toString(36).slice(-3);
+  DATA.trainees.push({
+    id, name,
+    handle: '@' + name.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,10),
+    color: ((DATA.trainees.length) % 7) + 1,
+    focus,
+    streak: 0,
+    lastCheckIn: 'Invited · pending',
+    status: 'on-track',
+    weekProgress: { done: 0, target: 3 },
+  });
+  showToast(`Invite sent to ${email}`, 'send');
+  setTimeout(() => navigate('trainerDashboard', { force: true }), 600);
+}
+function selectAssignCadence(btn, val) {
+  const seg = document.getElementById('assignCadenceSeg');
+  if (seg) seg.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const targetWrap = document.getElementById('assignTargetWrap');
+  if (targetWrap) targetWrap.style.display = val === 'weekly' ? '' : 'none';
+  APP.pendingAssignCadence = val;
+}
+function selectAssignTarget(btn, val) {
+  const seg = document.getElementById('assignTargetSeg');
+  if (seg) seg.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  APP.pendingAssignTarget = val;
+}
+function updateAssignCount() {
+  const checks = document.querySelectorAll('.assign-trainee-chk:checked');
+  const lbl = document.getElementById('assignCountLbl');
+  if (lbl) lbl.textContent = `${checks.length} selected`;
+}
+function toggleAllTrainees(btn) {
+  const all = document.querySelectorAll('.assign-trainee-chk');
+  const anyUnchecked = Array.from(all).some(c => !c.checked);
+  all.forEach(c => { c.checked = anyUnchecked; });
+  btn.textContent = anyUnchecked ? 'Unselect all' : 'Select all';
+  updateAssignCount();
+}
+function completeAssignGoal() {
+  const titleEl = document.getElementById('assignTitle');
+  const descEl = document.getElementById('assignDesc');
+  const title = (titleEl && titleEl.value.trim()) || 'New goal';
+  const cadence = APP.pendingAssignCadence || 'daily';
+  const target = APP.pendingAssignTarget || 3;
+  const picked = Array.from(document.querySelectorAll('.assign-trainee-chk:checked')).map(c => c.dataset.id);
+  if (picked.length === 0) {
+    showToast('Pick at least one trainee', 'x');
+    return;
+  }
+  const id = 'tg' + (DATA.trainerGoals.length + 1) + Date.now().toString(36).slice(-3);
+  DATA.trainerGoals.unshift({
+    id, title, cadence, target, assignedTo: picked, created: 'Just now',
+  });
+  showToast(`Goal assigned to ${picked.length} trainee${picked.length === 1 ? '' : 's'}`, 'check-circle');
+  confetti();
+  setTimeout(() => navigate('trainerDashboard', { force: true }), 700);
 }
