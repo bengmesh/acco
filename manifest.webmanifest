@@ -1,0 +1,20 @@
+{
+  "name": "acco — Accountability Fitness",
+  "short_name": "acco",
+  "description": "Goals get done with people. Social accountability for fitness, learning, and habits.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B0B14",
+  "theme_color": "#0B0B14",
+  "categories": ["health", "fitness", "lifestyle", "social"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='112' fill='%230B0B14'/><circle cx='256' cy='256' r='160' fill='none' stroke='%23C6F24E' stroke-width='56'/></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

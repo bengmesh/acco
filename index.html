@@ -2,17 +2,26 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
 <meta name="theme-color" content="#0B0B14" />
+
+<!-- PWA / iOS standalone -->
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="acco" />
+<meta name="format-detection" content="telephone=no" />
+
 <title>acco — Accountability Fitness</title>
 <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='12' fill='none' stroke='%23C6F24E' stroke-width='4'/></svg>" />
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%230B0B14'/><circle cx='90' cy='90' r='56' fill='none' stroke='%23C6F24E' stroke-width='20'/></svg>" />
 <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&f[]=clash-display@500,600,700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- Desktop device frame (hidden on mobile) -->
+  <!-- App shell (mobile-only, portrait) -->
   <div class="device-frame" id="deviceFrame">
-    <div class="device-notch" aria-hidden="true"></div>
     <div class="device-screen" id="deviceScreen">
       <div id="app" class="app"></div>
       <!-- Splash screen: shown on first load, fades out after animation completes -->
@@ -25,8 +34,43 @@
     </div>
   </div>
 
-  <!-- Mobile full-screen wrapper -->
-  <noscript><p style="padding:2rem;color:#fff">Please enable JavaScript to use this prototype.</p></noscript>
+  <!-- Desktop gate: shown when viewport is wider than a phone -->
+  <div id="desktop-gate" class="gate" aria-hidden="true">
+    <div class="gate-inner">
+      <div class="gate-logo logo">
+        <span class="logo-mark"></span>
+        <span class="wordmark">acc<em>o</em></span>
+      </div>
+      <h1 class="gate-title">Open acco on your phone</h1>
+      <p class="gate-body">
+        acco is a mobile experience. Visit
+        <strong>acco.fit</strong> on your phone, or scan the link from your
+        desktop browser, to get started.
+      </p>
+      <div class="gate-url">acco.fit</div>
+      <p class="gate-footnote">
+        Once open, tap <em>Add to Home Screen</em> to install acco as an app.
+      </p>
+    </div>
+  </div>
+
+  <!-- Landscape gate: shown when mobile device is rotated sideways -->
+  <div id="landscape-gate" class="gate" aria-hidden="true">
+    <div class="gate-inner">
+      <div class="gate-rotate-icon" aria-hidden="true">
+        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="14" y="6" width="28" height="48" rx="4"/>
+          <circle cx="28" cy="48" r="1.5" fill="currentColor"/>
+          <path d="M48 28a16 16 0 01-12 14"/>
+          <path d="M38 38l-2 4 4 2"/>
+        </svg>
+      </div>
+      <h1 class="gate-title">Rotate to portrait</h1>
+      <p class="gate-body">acco works best held upright.</p>
+    </div>
+  </div>
+
+  <noscript><p style="padding:2rem;color:#fff">Please enable JavaScript to use acco.</p></noscript>
 
   <!-- Toast container -->
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -35,5 +79,15 @@
   <script src="components.js"></script>
   <script src="screens.js"></script>
   <script src="app.js"></script>
+  <script>
+    // Best-effort portrait lock (Android Chrome; iOS Safari ignores).
+    (function lockPortrait() {
+      try {
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('portrait').catch(function () {});
+        }
+      } catch (e) {}
+    })();
+  </script>
 </body>
 </html>

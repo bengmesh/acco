@@ -125,57 +125,105 @@ a:hover { text-decoration: underline; }
   }
 }
 
-/* =============== Device Frame =============== */
+/* =============== App Frame (mobile-only, portrait) =============== */
 .device-frame {
   position: fixed;
   inset: 0;
-  display: grid;
-  place-items: center;
-  padding: var(--space-6);
+  background: var(--color-bg);
+  overflow: hidden;
 }
 
 .device-screen {
   position: relative;
-  width: var(--phone-w);
-  height: var(--phone-h);
-  max-height: calc(100dvh - var(--space-8));
+  width: 100%;
+  height: 100dvh;
   background: var(--color-bg);
-  border-radius: 46px;
   overflow: hidden;
-  box-shadow:
-    0 0 0 10px #111,
-    0 0 0 12px #2a2a36,
-    0 40px 100px rgba(0,0,0,0.6),
-    0 0 80px rgba(198, 242, 78, 0.08);
-  border: 1px solid rgba(255,255,255,0.05);
 }
 
-.device-notch {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 120px;
-  height: 30px;
-  background: #000;
-  border-radius: 20px;
-  z-index: 1000;
-  pointer-events: none;
+/* =============== Desktop / Landscape Gates =============== */
+.gate {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--color-bg);
+  color: var(--color-text);
+  padding: 32px 24px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.gate-inner {
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.gate-logo { transform: scale(1.2); margin-bottom: 8px; }
+.gate-title {
+  font-family: var(--font-display, inherit);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+  color: var(--color-text);
+}
+.gate-body {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-text-dim, rgba(255,255,255,0.7));
+  margin: 0;
+}
+.gate-body strong { color: var(--color-accent, #C6F24E); font-weight: 600; }
+.gate-url {
+  margin-top: 8px;
+  padding: 14px 28px;
+  border: 1px solid rgba(198, 242, 78, 0.4);
+  border-radius: 999px;
+  color: var(--color-accent, #C6F24E);
+  font-family: var(--font-display, inherit);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.gate-footnote {
+  margin-top: 4px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.5;
+}
+.gate-footnote em { color: rgba(255,255,255,0.7); font-style: normal; font-weight: 500; }
+.gate-rotate-icon {
+  width: 64px;
+  height: 64px;
+  color: var(--color-accent, #C6F24E);
+  margin-bottom: 4px;
+}
+.gate-rotate-icon svg {
+  width: 100%; height: 100%;
+  animation: rotateHint 2.4s ease-in-out infinite;
+  transform-origin: center;
+}
+@keyframes rotateHint {
+  0%, 35% { transform: rotate(0deg); }
+  55%, 80% { transform: rotate(-90deg); }
+  100% { transform: rotate(0deg); }
 }
 
-/* On small screens (real mobile), ditch the frame */
-@media (max-width: 480px), (max-height: 900px) and (max-width: 900px) {
-  body { overflow: auto; background-image: none; }
-  .device-frame { padding: 0; position: static; }
-  .device-screen {
-    width: 100%;
-    height: 100dvh;
-    max-height: none;
-    border-radius: 0;
-    box-shadow: none;
-    border: none;
-  }
-  .device-notch { display: none; }
+/* Show desktop gate on wide viewports (laptops/desktops) */
+@media (min-width: 768px) and (min-height: 600px) {
+  .device-frame { display: none; }
+  #desktop-gate { display: flex; }
+}
+
+/* Show landscape “rotate” gate on short screens (rotated phones).
+   This wins over the desktop gate because phones in landscape are short. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .device-frame { display: none; }
+  #desktop-gate { display: none; }
+  #landscape-gate { display: flex; }
 }
 
 /* =============== App Shell =============== */
