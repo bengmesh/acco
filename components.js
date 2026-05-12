@@ -82,21 +82,9 @@ function logo(large = false) {
   `;
 }
 
-// Status bar (iOS-style)
+// Status bar (removed — real device status bar is used instead)
 function statusBar() {
-  const now = new Date();
-  const h = now.getHours() % 12 || 12;
-  const m = String(now.getMinutes()).padStart(2, '0');
-  return `
-    <div class="status-bar">
-      <div>${h}:${m}</div>
-      <div class="right">
-        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 14a2 2 0 012-2h2v4H4a2 2 0 01-2-2zm5-4a2 2 0 012-2h2v8H9a2 2 0 01-2-2V10zm5-4a2 2 0 012-2h2v12h-2a2 2 0 01-2-2V6z"/></svg>
-        <svg viewBox="0 0 20 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 7a9 9 0 0118 0"/><path d="M4.5 9.5a5 5 0 0111 0"/><circle cx="10" cy="12" r="1.2" fill="currentColor"/></svg>
-        <svg viewBox="0 0 24 12" fill="none"><rect x="1" y="1" width="20" height="10" rx="2.5" stroke="currentColor" stroke-width="1.2"/><rect x="3" y="3" width="13" height="6" rx="1" fill="currentColor"/><rect x="22" y="4" width="1.5" height="4" rx="0.5" fill="currentColor"/></svg>
-      </div>
-    </div>
-  `;
+  return '';
 }
 
 // Header with optional back
