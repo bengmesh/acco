@@ -2,8 +2,8 @@
 const DATA = {
   user: {
     id: 'me',
-    name: 'Ben Taylor',
-    handle: '@bentaylor',
+    name: 'Ben Guerra',
+    handle: '@benguerra',
     bio: 'Building consistency one day at a time. Dad of two, weekend trail runner.',
     avatar: null,
     avatarColor: 1,

@@ -48,7 +48,7 @@ python3 -m http.server 5000
 
 ## Author
 
-Ben Taylor — [ben@meshcreative.co](mailto:ben@meshcreative.co)
+Ben Guerra — [ben@meshcreative.co](mailto:ben@meshcreative.co)
 
 ## License
 

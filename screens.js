@@ -50,7 +50,7 @@ SCREENS.signup = () => `
 
       <div class="field">
         <label class="field-label">Full name</label>
-        <div class="input-icon">${icon('user')}<input class="input" type="text" placeholder="Ben Taylor" value="Ben Taylor"/></div>
+        <div class="input-icon">${icon('user')}<input class="input" type="text" placeholder="Ben Guerra" value="Ben Guerra"/></div>
       </div>
       <div class="field">
         <label class="field-label">Email</label>
